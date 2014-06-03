@@ -24,12 +24,23 @@ L_BALLSIZE = int(HEIGHT/30)
 M_BALLSIZE = int(HEIGHT/50)
 S_BALLSIZE = int(HEIGHT/90)
 basePath = os.path.dirname(__file__)
-p1ballPath = os.path.join(basePath, "red_ball.png")
-p2ballPath = os.path.join(basePath, "green_ball.png")
-dmgballPath = os.path.join(basePath, "damaged_ball.png")
+p1ballPath = os.path.join(basePath, "./img/red_ball.png")
+p2ballPath = os.path.join(basePath, "./img/green_ball.png")
+dmgballPath = os.path.join(basePath, "./img/damaged_ball.png")
 P1_BALL_IMG = pygame.image.load(p1ballPath)
 P2_BALL_IMG = pygame.image.load(p2ballPath)
 DMG_BALL_IMG = pygame.image.load(dmgballPath)
+NOISE = False
+
+# Aah, the things we do for grittyness
+if NOISE:
+	noisePath = os.path.join(basePath, "./img/noise.png")
+	noisescaledPath = os.path.join(basePath, "./img/noise_scaled.png")
+	NOISE_IMG = pygame.image.load(noisePath)
+	noise_img_scaled = pygame.transform.scale(NOISE_IMG, (WIDTH, HEIGHT))
+	pygame.image.save(noise_img_scaled, noisescaledPath)
+	NOISE_IMG = pygame.image.load(noisescaledPath)
+
 BALL_HITPOINTS = 50
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
 FPS = 60
@@ -187,6 +198,8 @@ while running:
                 spawnBall(1, random.choice(BALL_SIZES))
             elif event.key == pygame.K_2:
                 spawnBall(2, random.choice(BALL_SIZES))
+            elif event.key == pygame.K_0:
+            	test_anim = True
 
 
     # Checks if balls are inside players area, and allows for them to be moved.
@@ -348,5 +361,9 @@ while running:
         screen.blit(p2_balls_label, (10, 85))
         screen.blit(p1_lives_label, (10, 110))
         screen.blit(p2_lives_label, (10, 135))
+
+    # LAST OF ALL, THE GRITTY NOISE FILTER WEEEE
+    if NOISE:
+    	screen.blit(NOISE_IMG, (0, 0))
 
     pygame.display.flip()
