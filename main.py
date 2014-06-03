@@ -18,8 +18,8 @@ if android:
 pygame.init()
 
 #(WIDTH, HEIGHT) = (800, 1280)
-#(WIDTH, HEIGHT) = (720, 1280)
-(WIDTH, HEIGHT) = (480, 800)
+(WIDTH, HEIGHT) = (720, 1280)
+#(WIDTH, HEIGHT) = (480, 800)
 L_BALLSIZE = int(HEIGHT/30)
 M_BALLSIZE = int(HEIGHT/50)
 S_BALLSIZE = int(HEIGHT/90)
