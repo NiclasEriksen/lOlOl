@@ -27,19 +27,23 @@ basePath = os.path.dirname(__file__)
 p1ballPath = os.path.join(basePath, "./img/red_ball.png")
 p2ballPath = os.path.join(basePath, "./img/green_ball.png")
 dmgballPath = os.path.join(basePath, "./img/damaged_ball.png")
+splashPath = os.path.join(basePath, "./android-presplash.jpg")
 P1_BALL_IMG = pygame.image.load(p1ballPath)
 P2_BALL_IMG = pygame.image.load(p2ballPath)
 DMG_BALL_IMG = pygame.image.load(dmgballPath)
+SPLASH_IMG = pygame.image.load(splashPath)
 NOISE = False
+pause_rect1 = 0
+pause_rect2 = 0
 
 # Aah, the things we do for grittyness
 if NOISE:
-	noisePath = os.path.join(basePath, "./img/noise.png")
-	noisescaledPath = os.path.join(basePath, "./img/noise_scaled.png")
-	NOISE_IMG = pygame.image.load(noisePath)
-	noise_img_scaled = pygame.transform.scale(NOISE_IMG, (WIDTH, HEIGHT))
-	pygame.image.save(noise_img_scaled, noisescaledPath)
-	NOISE_IMG = pygame.image.load(noisescaledPath)
+    noisePath = os.path.join(basePath, "./img/noise.png")
+    noisescaledPath = os.path.join(basePath, "./img/noise_scaled.png")
+    NOISE_IMG = pygame.image.load(noisePath)
+    noise_img_scaled = pygame.transform.scale(NOISE_IMG, (WIDTH, HEIGHT))
+    pygame.image.save(noise_img_scaled, noisescaledPath)
+    NOISE_IMG = pygame.image.load(noisescaledPath)
 
 BALL_HITPOINTS = 50
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
@@ -57,6 +61,7 @@ P2_AREA_COLOUR = (30,40,30)
 ACTIVE_AREA_COLOUR = (50,50,50)
 TEXT_COLOUR = (100,200,100)
 COURT_COLOUR = (200,200,200)
+PAUSE_COLOUR = (160,160,160)
 P_AREA_SIZE = HEIGHT/6
 RANDOM_PLAYER_START = True
 BALL_SIZES = ["s", "m", "l"]
@@ -135,7 +140,7 @@ p1_turn, p2_turn = restartRound()
 p1_score, p2_score, p1_balls, p2_balls, balls_in_motion = [], [], [], [], []
 clock = pygame.time.Clock()
 real_fps = FPS
-paused = False
+paused = True
 debug_mode = False
 selected_particle = None
 running = True
@@ -199,7 +204,8 @@ while running:
             elif event.key == pygame.K_2:
                 spawnBall(2, random.choice(BALL_SIZES))
             elif event.key == pygame.K_0:
-            	test_anim = True
+                test_anim = True
+                pause_rect1, pause_rect2 = 0, 0
 
 
     # Checks if balls are inside players area, and allows for them to be moved.
@@ -242,9 +248,9 @@ while running:
         P1_WEAK_COLOUR = (220,110,110)
         #pygame.draw.circle(screen, p.colour, (int(p.x), int(p.y)), p.size, 0)
         if p.player == 1:
-        	scaled_ball_img = pygame.transform.scale(P1_BALL_IMG, (p.size*2, p.size*2))
+            scaled_ball_img = pygame.transform.scale(P1_BALL_IMG, (p.size*2, p.size*2))
         elif p.player == 2:
-        	scaled_ball_img = pygame.transform.scale(P2_BALL_IMG, (p.size*2, p.size*2))
+            scaled_ball_img = pygame.transform.scale(P2_BALL_IMG, (p.size*2, p.size*2))
 
         scaled_by_hp = int(p.size-(p.size/(BALL_HITPOINTS/p.hitpoints)))
         scaled_dmg_ball_img = pygame.transform.scale(DMG_BALL_IMG, (scaled_by_hp*2, scaled_by_hp*2))
@@ -330,31 +336,50 @@ while running:
             if p in balls_in_motion:
                 balls_in_motion.remove(p)
 
-    # RESTART BUTTON
-    if paused:
-        restart_button.create_button(screen, (107,142,35), WIDTH/2-155, HEIGHT/2-30, 150, 60, 0, "New Round", (255,255,255))
-        quit_button.create_button(screen, (142,35,35), WIDTH/2+5, HEIGHT/2-30, 150, 60, 0, "Quit LOLOL", (255,255,255))
-
     clock.tick(real_fps)
-    fps_label = FONT.render("FPS: %i" % round(clock.get_fps()), 1, TEXT_COLOUR)
-    particles_on_screen = FONT.render("Particles: %i" % len(universe.particles), 1, TEXT_COLOUR)
-    p1_balls_label = FONT.render("P1 balls: %i" % len(p1_balls), 1, TEXT_COLOUR)
-    p2_balls_label = FONT.render("P2 balls: %i" % len(p2_balls), 1, TEXT_COLOUR)
-    p1_lives_label = FONT.render("P1 lives: %i" % universe.p1_lives, 1, TEXT_COLOUR)
-    p2_lives_label = FONT.render("P2 lives: %i" % universe.p2_lives, 1, TEXT_COLOUR)
+
     score_label1 = OSD_FONT.render("{0}".format(len(p1_score), len(p2_score)), 1, COURT_COLOUR)
     score_label2 = OSD_FONT.render("{1}".format(len(p1_score), len(p2_score)), 1, COURT_COLOUR)
 
-    if not paused:
+    if not paused: # Shows score on both sides, the top one rotated
         score_label1 = pygame.transform.rotozoom(score_label1, 180, 1)
         screen.blit(score_label1, (WIDTH-WIDTH/8, 0))
         screen.blit(score_label2, (20, int(HEIGHT-HEIGHT/15)))
 
+
+    # PAUSE MENU, INCLUDING ANIMATION
     if paused:
+        pygame.draw.rect(screen, PAUSE_COLOUR, (0, 0, WIDTH, HEIGHT-(HEIGHT-pause_rect1)), 0)
+        if pause_rect1 < HEIGHT/2:
+            pause_rect1 += int(HEIGHT/30)
+        pygame.draw.rect(screen, PAUSE_COLOUR, (0, HEIGHT-pause_rect2, WIDTH, HEIGHT-(HEIGHT-pause_rect2)), 0)
+        if pause_rect2 < HEIGHT/2:
+            pause_rect2 += int(HEIGHT/30)
+
+        restart_button.create_button(screen, (107,142,35), WIDTH/2-155, HEIGHT/2-30, 150, 60, 0, "New Round", (255,255,255))
+        quit_button.create_button(screen, (142,35,35), WIDTH/2+5, HEIGHT/2-30, 150, 60, 0, "Quit LOLOL", (255,255,255))
+        # Shows the score in the middle of the screen instead
         screen.blit(score_label1, (WIDTH/15, HEIGHT/2-HEIGHT/15))
         screen.blit(score_label2, (WIDTH/15, HEIGHT/2))
 
-    if debug_mode:
+    elif not paused:
+        pygame.draw.rect(screen, PAUSE_COLOUR, (0, 0, WIDTH, HEIGHT-(HEIGHT-pause_rect1)), 0)
+        if pause_rect1 > 0:
+            pause_rect1 -= int(HEIGHT/30)
+        pygame.draw.rect(screen, PAUSE_COLOUR, (0, HEIGHT-pause_rect2, WIDTH, HEIGHT-(HEIGHT-pause_rect2)), 0)
+        if pause_rect2 > 0:
+            pause_rect2 -= int(HEIGHT/30)
+    
+    # Renders the sweet ass splash img
+    screen.blit(SPLASH_IMG, (WIDTH/2-128, (-368+pause_rect1)))
+
+    if debug_mode: # DEBUG MODE PSD TEXT
+        fps_label = FONT.render("FPS: %i" % round(clock.get_fps()), 1, TEXT_COLOUR)
+        particles_on_screen = FONT.render("Particles: %i" % len(universe.particles), 1, TEXT_COLOUR)
+        p1_balls_label = FONT.render("P1 balls: %i" % len(p1_balls), 1, TEXT_COLOUR)
+        p2_balls_label = FONT.render("P2 balls: %i" % len(p2_balls), 1, TEXT_COLOUR)
+        p1_lives_label = FONT.render("P1 lives: %i" % universe.p1_lives, 1, TEXT_COLOUR)
+        p2_lives_label = FONT.render("P2 lives: %i" % universe.p2_lives, 1, TEXT_COLOUR)
         screen.blit(fps_label, (10, 10))
         screen.blit(particles_on_screen, (10, 35))
         screen.blit(p1_balls_label, (10, 60))
@@ -364,6 +389,6 @@ while running:
 
     # LAST OF ALL, THE GRITTY NOISE FILTER WEEEE
     if NOISE:
-    	screen.blit(NOISE_IMG, (0, 0))
+        screen.blit(NOISE_IMG, (0, 0))
 
     pygame.display.flip()
