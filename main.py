@@ -20,8 +20,8 @@ pygame.init()
 
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
-#(WIDTH, HEIGHT) = (720, 1280)
-(WIDTH, HEIGHT) = (480, 800)
+(WIDTH, HEIGHT) = (720, 1280)
+#(WIDTH, HEIGHT) = (480, 800)
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
 FPS = 60
 NOISE = False # Noise filter, destroys performance
