@@ -3,6 +3,7 @@ from pygame import transform
 import PyParticles, PyButtons
 import random, os
 from math import pi
+from timer import Timer
 # Check for android module and does stuff
 try:
     import android
@@ -17,27 +18,35 @@ if android:
     android.map_key(android.KEYCODE_BACK, pygame.K_ESCAPE)
 pygame.init()
 
+######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
-(WIDTH, HEIGHT) = (720, 1280)
-#(WIDTH, HEIGHT) = (480, 800)
+#(WIDTH, HEIGHT) = (720, 1280)
+(WIDTH, HEIGHT) = (480, 800)
+WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
+FPS = 60
+NOISE = False # Noise filter, destroys performance
 L_BALLSIZE = int(HEIGHT/30)
 M_BALLSIZE = int(HEIGHT/50)
 S_BALLSIZE = int(HEIGHT/90)
-basePath = os.path.dirname(__file__)
-p1ballPath = os.path.join(basePath, "./img/red_ball.png")
-p2ballPath = os.path.join(basePath, "./img/green_ball.png")
-dmgballPath = os.path.join(basePath, "./img/damaged_ball.png")
-splashPath = os.path.join(basePath, "./android-presplash.jpg")
-P1_BALL_IMG = pygame.image.load(p1ballPath)
-P2_BALL_IMG = pygame.image.load(p2ballPath)
-DMG_BALL_IMG = pygame.image.load(dmgballPath)
-SPLASH_IMG = pygame.image.load(splashPath)
-NOISE = False
-pause_rect1 = 0
-pause_rect2 = 0
+BALL_HITPOINTS = 50
+RANDOM_PLAYER_START = True
+P_AREA_SIZE = HEIGHT/6 # Size of the player area in relation to the height
 
-# Aah, the things we do for grittyness
-if NOISE:
+######### F I L E   L O A D I N G #########
+FONT_FILE = "./font.ttf"
+OSD_FONT_FILE = "./osd_font.ttf"
+FONT = pygame.font.Font(FONT_FILE, 15)
+OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/15))
+basePath = os.path.dirname(__file__)
+p1ballPath = os.path.join(basePath, "./img/red_ball.png") # P1 ball image
+P1_BALL_IMG = pygame.image.load(p1ballPath)
+p2ballPath = os.path.join(basePath, "./img/green_ball.png") # P2 ball image
+P2_BALL_IMG = pygame.image.load(p2ballPath)
+dmgballPath = os.path.join(basePath, "./img/damaged_ball.png") # The damage indicator
+DMG_BALL_IMG = pygame.image.load(dmgballPath)
+splashPath = os.path.join(basePath, "./android-presplash.jpg") # The sweet splash logo
+SPLASH_IMG = pygame.image.load(splashPath)
+if NOISE: # Aah, the things we do for grittyness
     noisePath = os.path.join(basePath, "./img/noise.png")
     noisescaledPath = os.path.join(basePath, "./img/noise_scaled.png")
     NOISE_IMG = pygame.image.load(noisePath)
@@ -45,13 +54,7 @@ if NOISE:
     pygame.image.save(noise_img_scaled, noisescaledPath)
     NOISE_IMG = pygame.image.load(noisescaledPath)
 
-BALL_HITPOINTS = 50
-WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
-FPS = 60
-FONT_FILE = "./font.ttf"
-OSD_FONT_FILE = "./osd_font.ttf"
-FONT = pygame.font.Font(FONT_FILE, 15)
-OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/15))
+######### C O L O U R S #########
 P1_BALL_COLOUR = (220,40,40)
 P2_BALL_COLOUR = (40,220,40)
 P1_WEAK_COLOUR = (220,110,110)
@@ -60,25 +63,16 @@ P1_AREA_COLOUR = (40,30,30)
 P2_AREA_COLOUR = (30,40,30)
 ACTIVE_AREA_COLOUR = (50,50,50)
 TEXT_COLOUR = (100,200,100)
-COURT_COLOUR = (200,200,200)
+COURT_COLOUR = (200,200,200) # Lines and stuff
 PAUSE_COLOUR = (160,160,160)
-P_AREA_SIZE = HEIGHT/6
-RANDOM_PLAYER_START = True
-BALL_SIZES = ["s", "m", "l"]
 
-pygame.display.set_caption(WINDOW_TITLE)
-screen = pygame.display.set_mode((WIDTH, HEIGHT))
-# PHYSICS
+######### P H Y S I C S #########
 universe = PyParticles.Environment((WIDTH, HEIGHT))
 universe.colour = (30,30,30)
 universe.addFunctions(['move','bounce','collide','drag'])
 universe.mass_of_air = 0.04
 universe.acceleration = (pi, 0.15)
 universe.global_elasticity = False
-
-#Button
-restart_button = PyButtons.Button()
-quit_button = PyButtons.Button()
 
 # CLUTTER
 def spawnBall(p, s):
@@ -121,7 +115,7 @@ def restartRound():
         del universe.particles[:]
     if RANDOM_PLAYER_START:
         coinflip = random.randrange(1,3)
-        print ("Player %i begins!" % coinflip)
+        #print ("Player %i begins!" % coinflip)
         if coinflip == 1:
             p1 = True
         else:
@@ -135,16 +129,23 @@ def restartRound():
 
     return p1, p2
 
-p1_turn, p2_turn = restartRound()
+# Defining variables for later
+pygame.display.set_caption(WINDOW_TITLE)
+screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
+restart_button = PyButtons.Button()
+quit_button = PyButtons.Button()
 p1_score, p2_score, p1_balls, p2_balls, balls_in_motion = [], [], [], [], []
+BALL_SIZES = ["s", "m", "l"]
 clock = pygame.time.Clock()
 real_fps = FPS
 paused = True
 debug_mode = False
 selected_particle = None
 running = True
-# MAIN LOOP LOL
+p1_turn, p2_turn = restartRound()
+
+######### MAIN LOOP #########
 while running:
 
     # Android-specific:
@@ -203,10 +204,6 @@ while running:
                 spawnBall(1, random.choice(BALL_SIZES))
             elif event.key == pygame.K_2:
                 spawnBall(2, random.choice(BALL_SIZES))
-            elif event.key == pygame.K_0:
-                test_anim = True
-                pause_rect1, pause_rect2 = 0, 0
-
 
     # Checks if balls are inside players area, and allows for them to be moved.
 
@@ -264,9 +261,11 @@ while running:
             if p.y < HEIGHT-P_AREA_SIZE and p.y > HEIGHT/2:    # Player 1
                 if not p in p1_score:
                     p1_score.append(p)
+                    p1_score_len = len(p1_score)
             else:
                 if p in p1_score:
                     p1_score.remove(p)
+                    p1_score_len = len(p1_score)
 
         if p.player == 2:
             if p.y > P_AREA_SIZE and p.y < HEIGHT/2:    # Player 2
@@ -342,13 +341,27 @@ while running:
     score_label2 = OSD_FONT.render("{1}".format(len(p1_score), len(p2_score)), 1, COURT_COLOUR)
 
     if not paused: # Shows score on both sides, the top one rotated
-        score_label1 = pygame.transform.rotozoom(score_label1, 180, 1)
+        try:
+            p1_score_len
+        except NameError:
+            p1_score_len = 0
+        if not len(p1_score) == p1_score_len:
+            score_label1 = pygame.transform.rotozoom(score_label1, 180, 1) # rotate only on score update
+            p1_score_len = len(p1_score)
         screen.blit(score_label1, (WIDTH-WIDTH/8, 0))
         screen.blit(score_label2, (20, int(HEIGHT-HEIGHT/15)))
 
 
     # PAUSE MENU, INCLUDING ANIMATION
     if paused:
+        try:
+            pause_rect1
+        except NameError:
+            pause_rect1 = 0
+        try:
+            pause_rect2
+        except NameError:
+            pause_rect2 = 0
         pygame.draw.rect(screen, PAUSE_COLOUR, (0, 0, WIDTH, HEIGHT-(HEIGHT-pause_rect1)), 0)
         if pause_rect1 < HEIGHT/2:
             pause_rect1 += int(HEIGHT/30)
@@ -363,15 +376,16 @@ while running:
         screen.blit(score_label2, (WIDTH/15, HEIGHT/2))
 
     elif not paused:
-        pygame.draw.rect(screen, PAUSE_COLOUR, (0, 0, WIDTH, HEIGHT-(HEIGHT-pause_rect1)), 0)
         if pause_rect1 > 0:
+            pygame.draw.rect(screen, PAUSE_COLOUR, (0, 0, WIDTH, HEIGHT-(HEIGHT-pause_rect1)), 0)
             pause_rect1 -= int(HEIGHT/30)
-        pygame.draw.rect(screen, PAUSE_COLOUR, (0, HEIGHT-pause_rect2, WIDTH, HEIGHT-(HEIGHT-pause_rect2)), 0)
         if pause_rect2 > 0:
+            pygame.draw.rect(screen, PAUSE_COLOUR, (0, HEIGHT-pause_rect2, WIDTH, HEIGHT-(HEIGHT-pause_rect2)), 0)
             pause_rect2 -= int(HEIGHT/30)
     
     # Renders the sweet ass splash img
-    screen.blit(SPLASH_IMG, (WIDTH/2-128, (-368+pause_rect1)))
+    if pause_rect1 > 0:
+            screen.blit(SPLASH_IMG, (WIDTH/2-128, (-368+pause_rect1)))
 
     if debug_mode: # DEBUG MODE PSD TEXT
         fps_label = FONT.render("FPS: %i" % round(clock.get_fps()), 1, TEXT_COLOUR)
