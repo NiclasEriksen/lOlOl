@@ -1,7 +1,7 @@
 import pygame
 from pygame import transform
-import PyParticles, PyButtons
-import random, os
+import PyParticles, PyButtons, PyColorize
+import random, os, Image, struct
 from math import pi
 from timer import Timer
 # Check for android module and does stuff
@@ -20,8 +20,8 @@ pygame.init()
 
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
-(WIDTH, HEIGHT) = (720, 1280)
-#(WIDTH, HEIGHT) = (480, 800)
+#(WIDTH, HEIGHT) = (720, 1280)
+(WIDTH, HEIGHT) = (480, 800)
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
 FPS = 60
 NOISE = False # Noise filter, destroys performance
@@ -32,6 +32,9 @@ LIVES = 8
 BALL_HITPOINTS = 50
 RANDOM_PLAYER_START = True
 P_AREA_SIZE = HEIGHT/6 # Size of the player area in relation to the height
+P1_COLOUR = "00CCFF"
+P2_COLOUR = "993300"
+DARK_THEME = True
 
 ######### F I L E   L O A D I N G #########
 FONT_FILE = "./font.ttf"
@@ -39,14 +42,34 @@ OSD_FONT_FILE = "./osd_font.ttf"
 FONT = pygame.font.Font(FONT_FILE, 15)
 OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/15))
 basePath = os.path.dirname(__file__)
-p1ballPath = os.path.join(basePath, "./img/red_ball.png") # P1 ball image
-P1_BALL_IMG = pygame.image.load(p1ballPath)
-p2ballPath = os.path.join(basePath, "./img/green_ball.png") # P2 ball image
-P2_BALL_IMG = pygame.image.load(p2ballPath)
+
+### HUE TESTING ###
+input_image_path = './img/new_ball_raw.png'
+# Colorizing P1
+result_image_path = './img/p1_ball.png'
+result = PyColorize.image_tint(input_image_path, '#%s' % P1_COLOUR)
+if os.path.exists(result_image_path):  # delete any previous result file
+    os.remove(result_image_path)
+result.save(result_image_path)  # file name's extension determines format
+P1_BALL_IMG = pygame.image.load(result_image_path)
+
+# Colorizing P2
+result_image_path = './img/p2_ball.png'
+result = PyColorize.image_tint(input_image_path, '#%s' % P2_COLOUR)
+if os.path.exists(result_image_path):  # delete any previous result file
+    os.remove(result_image_path)
+result.save(result_image_path)  # file name's extension determines format
+P2_BALL_IMG = pygame.image.load(result_image_path)
+
+#p1ballPath = os.path.join(basePath, "./img/red_ball.png") # P1 ball image
+#P1_BALL_IMG = pygame.image.load(p1ballPath)
+#p2ballPath = os.path.join(basePath, "./img/green_ball.png") # P2 ball image
+#P2_BALL_IMG = pygame.image.load(p2ballPath)
 dmgballPath = os.path.join(basePath, "./img/damaged_ball.png") # The damage indicator
 DMG_BALL_IMG = pygame.image.load(dmgballPath)
 splashPath = os.path.join(basePath, "./android-presplash.jpg") # The sweet splash logo
 SPLASH_IMG = pygame.image.load(splashPath)
+
 if NOISE: # Aah, the things we do for grittyness
     noisePath = os.path.join(basePath, "./img/noise.png")
     noisescaledPath = os.path.join(basePath, "./img/noise_scaled.png")
@@ -64,16 +87,25 @@ P2_M_IMG = pygame.transform.scale(P2_BALL_IMG, (M_BALLSIZE*2, M_BALLSIZE*2))
 P2_S_IMG = pygame.transform.scale(P2_BALL_IMG, (S_BALLSIZE*2, S_BALLSIZE*2))
 
 ######### C O L O U R S #########
-P1_BALL_COLOUR = (220,40,40)
-P2_BALL_COLOUR = (40,220,40)
-P1_WEAK_COLOUR = (220,110,110)
-P2_WEAK_COLOUR = (110,220,110)
-P1_AREA_COLOUR = (40,30,30)
-P2_AREA_COLOUR = (30,40,30)
+#P1_BALL_COLOUR = (220,40,40)
+#P2_BALL_COLOUR = (40,220,40)
+#P1_WEAK_COLOUR = (220,110,110)
+#P2_WEAK_COLOUR = (110,220,110)
+P1_COLOUR_RGB = struct.unpack('BBB',P1_COLOUR.decode('hex'))
+P2_COLOUR_RGB = struct.unpack('BBB',P2_COLOUR.decode('hex'))
+darkness = 10
+if DARK_THEME:
+    P1_AREA_COLOUR = (int(P1_COLOUR_RGB[0]/darkness),int(P1_COLOUR_RGB[1]/darkness),int(P1_COLOUR_RGB[2]/darkness))
+    P2_AREA_COLOUR = (int(P2_COLOUR_RGB[0]/darkness),int(P2_COLOUR_RGB[1]/darkness),int(P2_COLOUR_RGB[2]/darkness))
+else:
+    P1_AREA_COLOUR = P1_COLOUR_RGB
+    P2_AREA_COLOUR = P2_COLOUR_RGB
 ACTIVE_AREA_COLOUR = (50,50,50)
 TEXT_COLOUR = (100,200,100)
 COURT_COLOUR = (200,200,200) # Lines and stuff
 PAUSE_COLOUR = (160,160,160)
+
+###################
 
 ######### P H Y S I C S #########
 universe = PyParticles.Environment((WIDTH, HEIGHT))
@@ -101,7 +133,6 @@ def spawnBall(p, s):
         elasticity = 0.8
     if p == 1:
         player = 1
-        colour = P1_BALL_COLOUR
         y = int(P_AREA_SIZE/2)
         if universe.p1_lives == 0:
             spawn = False
@@ -109,7 +140,6 @@ def spawnBall(p, s):
             universe.p1_lives -= 1
     elif p == 2:
         player = 2
-        colour = P2_BALL_COLOUR
         y = int(HEIGHT - P_AREA_SIZE/2)
         if universe.p2_lives == 0:
             spawn = False
@@ -117,7 +147,7 @@ def spawnBall(p, s):
             universe.p2_lives -= 1
 
     if spawn:
-        universe.addParticles(mass=mass, player=player, hp=BALL_HITPOINTS, size=size, speed=0, colour=colour, x=WIDTH/2, y=y, elasticity=elasticity)
+        universe.addParticles(mass=mass, player=player, hp=BALL_HITPOINTS, size=size, speed=0, x=WIDTH/2, y=y, elasticity=elasticity)
 
 def restartRound():
     p1, p2 = False, False
@@ -418,6 +448,32 @@ while running:
         screen.blit(p2_balls_label, (10, 85))
         screen.blit(p1_lives_label, (10, 110))
         screen.blit(p2_lives_label, (10, 135))
+
+        # COLOR CHOOSER
+        bar_h = 40
+        bar_w = WIDTH/5
+        bar_p1_x = WIDTH/2+WIDTH/5
+        bar_p1_y = HEIGHT-HEIGHT/5
+        bar_p2_x = WIDTH/2-(WIDTH/5)*2
+        bar_p2_y = HEIGHT/5
+        #P1
+        r_p1_rect = (bar_p1_x, bar_p1_y, bar_w, bar_h)
+        g_p1_rect = (bar_p1_x, bar_p1_y+bar_h, bar_w, bar_h)
+        b_p1_rect = (bar_p1_x, bar_p1_y+bar_h*2, bar_w, bar_h)
+        rgb_p1_rect = (bar_p1_x-bar_w/2, bar_p1_y, bar_w/2, bar_h*3)
+        pygame.draw.rect(screen, (P1_COLOUR_RGB[0], 0, 0), r_p1_rect, 0)
+        pygame.draw.rect(screen, (0, P1_COLOUR_RGB[1], 0), g_p1_rect, 0)
+        pygame.draw.rect(screen, (0, 0, P1_COLOUR_RGB[2]), b_p1_rect, 0)
+        pygame.draw.rect(screen, P1_COLOUR_RGB, rgb_p1_rect, 0)
+        #P2
+        r_p2_rect = (bar_p2_x, bar_p2_y-bar_h, bar_w, bar_h)
+        g_p2_rect = (bar_p2_x, bar_p2_y-bar_h*2, bar_w, bar_h)
+        b_p2_rect = (bar_p2_x, bar_p2_y-bar_h*3, bar_w, bar_h)
+        rgb_p2_rect = (bar_p2_x+bar_w, bar_p2_y-bar_h*3, bar_w/2, bar_h*3)
+        pygame.draw.rect(screen, (P2_COLOUR_RGB[0], 0, 0), r_p2_rect, 0)
+        pygame.draw.rect(screen, (0, P2_COLOUR_RGB[1], 0), g_p2_rect, 0)
+        pygame.draw.rect(screen, (0, 0, P2_COLOUR_RGB[2]), b_p2_rect, 0)
+        pygame.draw.rect(screen, P2_COLOUR_RGB, rgb_p2_rect, 0)
 
     # LAST OF ALL, THE GRITTY NOISE FILTER WEEEE
     if NOISE:
