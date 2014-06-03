@@ -1,14 +1,18 @@
 import pygame
 from pygame import transform
-import PyParticles, PyButtons, PyColorize
-import random, os, Image, struct
+import PyParticles, PyButtons
+import random, os, struct
 from math import pi
-from timer import Timer
 # Check for android module and does stuff
 try:
     import android
 except ImportError:
     android = None
+# Check for PIL, not working on android yet
+try:
+    import Image, PyColorize
+except ImportError:
+    Image = None
 
 # Android stuff
 TIMEREVENT = pygame.USEREVENT
@@ -20,8 +24,8 @@ pygame.init()
 
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
-#(WIDTH, HEIGHT) = (720, 1280)
-(WIDTH, HEIGHT) = (480, 800)
+(WIDTH, HEIGHT) = (720, 1280)
+#(WIDTH, HEIGHT) = (480, 800)
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
 FPS = 60
 NOISE = False # Noise filter, destroys performance
@@ -43,23 +47,28 @@ FONT = pygame.font.Font(FONT_FILE, 15)
 OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/15))
 basePath = os.path.dirname(__file__)
 
-### HUE TESTING ###
-input_image_path = './img/new_ball_raw.png'
-# Colorizing P1
-result_image_path = './img/p1_ball.png'
-result = PyColorize.image_tint(input_image_path, '#%s' % P1_COLOUR)
-if os.path.exists(result_image_path):  # delete any previous result file
-    os.remove(result_image_path)
-result.save(result_image_path)  # file name's extension determines format
-P1_BALL_IMG = pygame.image.load(result_image_path)
+if Image:
+    ### HUE TESTING ###
+    input_image_path = './img/new_ball_raw.png'
+    # Colorizing P1
+    result_image_path = './img/p1_ball.png'
+    result = PyColorize.image_tint(input_image_path, '#%s' % P1_COLOUR)
+    if os.path.exists(result_image_path):  # delete any previous result file
+        os.remove(result_image_path)
+    result.save(result_image_path)  # file name's extension determines format
+    P1_BALL_IMG = pygame.image.load(result_image_path)
 
-# Colorizing P2
-result_image_path = './img/p2_ball.png'
-result = PyColorize.image_tint(input_image_path, '#%s' % P2_COLOUR)
-if os.path.exists(result_image_path):  # delete any previous result file
-    os.remove(result_image_path)
-result.save(result_image_path)  # file name's extension determines format
-P2_BALL_IMG = pygame.image.load(result_image_path)
+    # Colorizing P2
+    result_image_path = './img/p2_ball.png'
+    result = PyColorize.image_tint(input_image_path, '#%s' % P2_COLOUR)
+    if os.path.exists(result_image_path):  # delete any previous result file
+        os.remove(result_image_path)
+    result.save(result_image_path)  # file name's extension determines format
+    P2_BALL_IMG = pygame.image.load(result_image_path)
+else:
+    P1_BALL_IMG = pygame.image.load('./img/p1_ball.png')
+    P2_BALL_IMG = pygame.image.load('./img/p2_ball.png')
+
 
 #p1ballPath = os.path.join(basePath, "./img/red_ball.png") # P1 ball image
 #P1_BALL_IMG = pygame.image.load(p1ballPath)
