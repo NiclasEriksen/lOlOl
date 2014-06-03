@@ -1,3 +1,6 @@
+#### MOST OF THE CREDITS OF THE PHYSICS MUST GO TO PETER COLLINRIDGE:
+####            http://www.petercollingridge.co.uk/
+####                            ty vry much
 import math, random
 try:
     import android
@@ -143,7 +146,7 @@ class Environment:
         self.elasticity = 0.75
         self.acceleration = (0,0)
         self.player = 0
-        self.p2_lives, self.p1_lives = 10, 10
+        self.p2_lives, self.p1_lives = 8, 8
         
         self.particle_functions1 = []
         self.particle_functions2 = []

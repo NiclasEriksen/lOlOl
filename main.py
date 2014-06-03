@@ -28,6 +28,7 @@ NOISE = False # Noise filter, destroys performance
 L_BALLSIZE = int(HEIGHT/30)
 M_BALLSIZE = int(HEIGHT/50)
 S_BALLSIZE = int(HEIGHT/90)
+LIVES = 8
 BALL_HITPOINTS = 50
 RANDOM_PLAYER_START = True
 P_AREA_SIZE = HEIGHT/6 # Size of the player area in relation to the height
@@ -54,6 +55,14 @@ if NOISE: # Aah, the things we do for grittyness
     pygame.image.save(noise_img_scaled, noisescaledPath)
     NOISE_IMG = pygame.image.load(noisescaledPath)
 
+P1_L_IMG = pygame.transform.scale(P1_BALL_IMG, (L_BALLSIZE*2, L_BALLSIZE*2))
+P1_M_IMG = pygame.transform.scale(P1_BALL_IMG, (M_BALLSIZE*2, M_BALLSIZE*2))
+P1_S_IMG = pygame.transform.scale(P1_BALL_IMG, (S_BALLSIZE*2, S_BALLSIZE*2))
+
+P2_L_IMG = pygame.transform.scale(P2_BALL_IMG, (L_BALLSIZE*2, L_BALLSIZE*2))
+P2_M_IMG = pygame.transform.scale(P2_BALL_IMG, (M_BALLSIZE*2, M_BALLSIZE*2))
+P2_S_IMG = pygame.transform.scale(P2_BALL_IMG, (S_BALLSIZE*2, S_BALLSIZE*2))
+
 ######### C O L O U R S #########
 P1_BALL_COLOUR = (220,40,40)
 P2_BALL_COLOUR = (40,220,40)
@@ -73,6 +82,7 @@ universe.addFunctions(['move','bounce','collide','drag'])
 universe.mass_of_air = 0.04
 universe.acceleration = (pi, 0.15)
 universe.global_elasticity = False
+MOTION_TRESHOLD = 0.05
 
 # CLUTTER
 def spawnBall(p, s):
@@ -169,7 +179,7 @@ while running:
                     del p1_score[:]
                     del p2_score[:]
                     del balls_in_motion[:]
-                    universe.p1_lives, universe.p2_lives = 10, 10
+                    universe.p1_lives, universe.p2_lives = LIVES, LIVES
                     paused = False
                 elif quit_button.pressed(pygame.mouse.get_pos()):
                     running = False
@@ -189,7 +199,7 @@ while running:
                 del p1_score[:]
                 del p2_score[:]
                 del balls_in_motion[:]
-                universe.p1_lives, universe.p2_lives = 10, 10
+                universe.p1_lives, universe.p2_lives = LIVES, LIVES
             elif event.key == pygame.K_d:
                 debug_mode = (True, False)[debug_mode]
             elif event.key == pygame.K_t:
@@ -235,19 +245,27 @@ while running:
 
     # PARTICLE LOGIC AND DRAWING
     for p in universe.particles:
-        if p.player == 1:
-            p.colour = (P1_BALL_COLOUR[0], P1_BALL_COLOUR[1]+(BALL_HITPOINTS-p.hitpoints)*2, P1_BALL_COLOUR[2]+(BALL_HITPOINTS-p.hitpoints)*2)
-        elif p.player == 2:
-            p.colour = (P2_BALL_COLOUR[0]+(BALL_HITPOINTS-p.hitpoints)*2, P2_BALL_COLOUR[1], P2_BALL_COLOUR[2]+(BALL_HITPOINTS-p.hitpoints)*2)
+        #if p.player == 1: ##### OLD OBSOLETE?
+        #    p.colour = (P1_BALL_COLOUR[0], P1_BALL_COLOUR[1]+(BALL_HITPOINTS-p.hitpoints)*2, P1_BALL_COLOUR[2]+(BALL_HITPOINTS-p.hitpoints)*2)
+        #elif p.player == 2:
+        #    p.colour = (P2_BALL_COLOUR[0]+(BALL_HITPOINTS-p.hitpoints)*2, P2_BALL_COLOUR[1], P2_BALL_COLOUR[2]+(BALL_HITPOINTS-p.hitpoints)*2)
 
         ###### Draws the balls ######
-        P2_BALL_COLOUR = (40,220,40)
-        P1_WEAK_COLOUR = (220,110,110)
         #pygame.draw.circle(screen, p.colour, (int(p.x), int(p.y)), p.size, 0)
         if p.player == 1:
-            scaled_ball_img = pygame.transform.scale(P1_BALL_IMG, (p.size*2, p.size*2))
+            if p.size == L_BALLSIZE:
+                scaled_ball_img = P1_L_IMG
+            if p.size == M_BALLSIZE:
+                scaled_ball_img = P1_M_IMG
+            if p.size == S_BALLSIZE:
+                scaled_ball_img = P1_S_IMG
         elif p.player == 2:
-            scaled_ball_img = pygame.transform.scale(P2_BALL_IMG, (p.size*2, p.size*2))
+            if p.size == L_BALLSIZE:
+                scaled_ball_img = P2_L_IMG
+            if p.size == M_BALLSIZE:
+                scaled_ball_img = P2_M_IMG
+            if p.size == S_BALLSIZE:
+                scaled_ball_img = P2_S_IMG
 
         scaled_by_hp = int(p.size-(p.size/(BALL_HITPOINTS/p.hitpoints)))
         scaled_dmg_ball_img = pygame.transform.scale(DMG_BALL_IMG, (scaled_by_hp*2, scaled_by_hp*2))
@@ -328,7 +346,7 @@ while running:
             paused = True
 
         # Make a list of balls that are in motion
-        if p.speed > 0.03:
+        if p.speed > MOTION_TRESHOLD:
             if not p in balls_in_motion:
                 balls_in_motion.append(p)
         else:
