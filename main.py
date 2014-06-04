@@ -1,6 +1,6 @@
 import pygame
 from pygame import transform
-import PyParticles, PyButtons
+import PyParticles
 import random, os, struct
 from math import pi
 # Check for android module and does stuff
@@ -24,8 +24,8 @@ pygame.init()
 
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
-(WIDTH, HEIGHT) = (720, 1280)
-#(WIDTH, HEIGHT) = (480, 800)
+#(WIDTH, HEIGHT) = (720, 1280)
+(WIDTH, HEIGHT) = (480, 800)
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
 FPS = 60
 NOISE = False # Noise filter, destroys performance
@@ -78,6 +78,8 @@ dmgballPath = os.path.join(basePath, "./img/damaged_ball.png") # The damage indi
 DMG_BALL_IMG = pygame.image.load(dmgballPath)
 splashPath = os.path.join(basePath, "./android-presplash.jpg") # The sweet splash logo
 SPLASH_IMG = pygame.image.load(splashPath)
+NEWROUND_IMG = pygame.image.load('./img/new_round.png')
+QUIT_IMG = pygame.image.load('./img/quit.png')
 
 if NOISE: # Aah, the things we do for grittyness
     noisePath = os.path.join(basePath, "./img/noise.png")
@@ -182,8 +184,6 @@ def restartRound():
 pygame.display.set_caption(WINDOW_TITLE)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-restart_button = PyButtons.Button()
-quit_button = PyButtons.Button()
 p1_score, p2_score, p1_balls, p2_balls, balls_in_motion = [], [], [], [], []
 BALL_SIZES = ["s", "m", "l"]
 clock = pygame.time.Clock()
@@ -192,7 +192,7 @@ paused = True
 debug_mode = False
 selected_particle = None
 running = True
-p1_turn, p2_turn = restartRound()
+p1_turn, p2_turn = False, False
 
 ######### MAIN LOOP #########
 while running:
@@ -211,7 +211,7 @@ while running:
             (mouseX, mouseY) = pygame.mouse.get_pos()
             selected_particle = universe.findParticle(mouseX, mouseY)
             if paused:
-                if restart_button.pressed(pygame.mouse.get_pos()):
+                if mouseX < NEWROUND_IMG.get_size()[0] and mouseY > HEIGHT/2-NEWROUND_IMG.get_size()[1]/2 and mouseY < HEIGHT/2+NEWROUND_IMG.get_size()[1]/2:
                     del p1_balls[:]
                     del p2_balls[:]
                     p1_turn, p2_turn = restartRound()
@@ -220,7 +220,7 @@ while running:
                     del balls_in_motion[:]
                     universe.p1_lives, universe.p2_lives = LIVES, LIVES
                     paused = False
-                elif quit_button.pressed(pygame.mouse.get_pos()):
+                elif mouseX > WIDTH-QUIT_IMG.get_size()[0] and mouseY > HEIGHT/2-QUIT_IMG.get_size()[1]/2 and mouseY < HEIGHT/2+QUIT_IMG.get_size()[1]/2:
                     running = False
                 elif mouseY > (HEIGHT/5)*2 and mouseY < (HEIGHT/5)*3:
                     paused = False
@@ -411,14 +411,15 @@ while running:
 
     # PAUSE MENU, INCLUDING ANIMATION
     if paused:
-        try:
+        try: # Checks if it's the first time (aka when you run the app) and avoids the animation
             pause_rect1
         except NameError:
-            pause_rect1 = 0
+            pause_rect1 = HEIGHT/2
         try:
             pause_rect2
         except NameError:
-            pause_rect2 = 0
+            pause_rect2 = HEIGHT/2
+        # Draws and animates the rectangles that makes up the pause screen background
         pygame.draw.rect(screen, PAUSE_COLOUR, (0, 0, WIDTH, HEIGHT-(HEIGHT-pause_rect1)), 0)
         if pause_rect1 < HEIGHT/2:
             pause_rect1 += int(HEIGHT/30)
@@ -426,11 +427,36 @@ while running:
         if pause_rect2 < HEIGHT/2:
             pause_rect2 += int(HEIGHT/30)
 
-        restart_button.create_button(screen, (107,142,35), WIDTH/2-155, HEIGHT/2-30, 150, 60, 0, "New Round", (255,255,255))
-        quit_button.create_button(screen, (142,35,35), WIDTH/2+5, HEIGHT/2-30, 150, 60, 0, "Quit LOLOL", (255,255,255))
+        # BUTTON TRIANGLES
+        button_width = NEWROUND_IMG.get_size()[0]
+        button_height = NEWROUND_IMG.get_size()[1]
+        try:
+            pause_anim
+        except NameError:
+            pause_anim = button_width
+        try:
+            quit_anim
+        except NameError:
+            quit_anim = button_width
+
+        screen.blit(NEWROUND_IMG, ((0-button_width)+pause_anim, int(HEIGHT/2-button_height/2)))
+        newround_label = FONT.render("NEW", 1, (220,220,220))
+        screen.blit(newround_label, ((30-button_width)+pause_anim, HEIGHT/2-8))
+        
+        screen.blit(QUIT_IMG, (WIDTH-pause_anim, int(HEIGHT/2-button_height/2)))
+        quit_label = FONT.render("QUIT", 1, (220,220,220))
+        screen.blit(quit_label, ((WIDTH+button_width)-67-pause_anim, HEIGHT/2-8))
+        
+        if pause_anim < button_width:
+            pause_anim += int(button_width/15)
+        elif pause_anim > button_width:
+            pause_anim = button_width
+
+
+
         # Shows the score in the middle of the screen instead
-        screen.blit(score_label1, (WIDTH/15, HEIGHT/2-HEIGHT/15))
-        screen.blit(score_label2, (WIDTH/15, HEIGHT/2))
+        screen.blit(score_label1, (WIDTH/2-15, HEIGHT/2-HEIGHT/15))
+        screen.blit(score_label2, (WIDTH/2-15, HEIGHT/2))
 
     elif not paused:
         if pause_rect1 > 0:
@@ -440,6 +466,13 @@ while running:
             pygame.draw.rect(screen, PAUSE_COLOUR, (0, HEIGHT-pause_rect2, WIDTH, HEIGHT-(HEIGHT-pause_rect2)), 0)
             pause_rect2 -= int(HEIGHT/30)
     
+        if pause_anim > 0:
+            screen.blit(NEWROUND_IMG, ((0-button_width)+pause_anim, int(HEIGHT/2-(NEWROUND_IMG.get_size()[1]/2))))
+            screen.blit(QUIT_IMG, (WIDTH-pause_anim, int(HEIGHT/2-button_height/2)))
+            screen.blit(newround_label, ((30-button_width)+pause_anim, HEIGHT/2-8))
+            screen.blit(quit_label, ((WIDTH+button_width)-67-pause_anim, HEIGHT/2-8))
+            pause_anim -= int(WIDTH/30)
+
     # Renders the sweet ass splash img
     if pause_rect1 > 0:
             screen.blit(SPLASH_IMG, (WIDTH/2-128, (-368+pause_rect1)))
