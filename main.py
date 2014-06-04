@@ -13,6 +13,7 @@ try:
     import Image, PyColorize
 except ImportError:
     Image = None
+    print ("Not generating colored balls/court")
 
 # Android stuff
 TIMEREVENT = pygame.USEREVENT
@@ -24,8 +25,8 @@ pygame.init()
 
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
-#(WIDTH, HEIGHT) = (720, 1280)
-(WIDTH, HEIGHT) = (480, 800)
+(WIDTH, HEIGHT) = (720, 1280)
+#(WIDTH, HEIGHT) = (480, 800)
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
 FPS = 60
 NOISE = False # Noise filter, destroys performance
@@ -36,8 +37,8 @@ LIVES = 8
 BALL_HITPOINTS = 50
 RANDOM_PLAYER_START = True
 P_AREA_SIZE = HEIGHT/6 # Size of the player area in relation to the height
-P1_COLOUR = "00CCFF"
-P2_COLOUR = "993300"
+P1_COLOUR = "4f7ea9"
+P2_COLOUR = "ff9743"
 DARK_THEME = True
 
 ######### F I L E   L O A D I N G #########
@@ -115,6 +116,11 @@ ACTIVE_AREA_COLOUR = (50,50,50)
 TEXT_COLOUR = (100,200,100)
 COURT_COLOUR = (200,200,200) # Lines and stuff
 PAUSE_COLOUR = (160,160,160)
+if Image:
+    p1_score_colour = P1_COLOUR_RGB
+    p2_score_colour = P2_COLOUR_RGB
+else:
+    p1_score_colour, p2_score_colour = COURT_COLOUR, COURT_COLOUR
 
 ###################
 
@@ -162,11 +168,11 @@ def spawnBall(p, s):
 
 def restartRound():
     p1, p2 = False, False
-    if not len(universe.particles) == 0:
-        del universe.particles[:]
+    p1_b, p2_b = [], []
+    universe.p1_lives, universe.p2_lives = LIVES, LIVES
+    del universe.particles[:]
     if RANDOM_PLAYER_START:
         coinflip = random.randrange(1,3)
-        #print ("Player %i begins!" % coinflip)
         if coinflip == 1:
             p1 = True
         else:
@@ -177,8 +183,15 @@ def restartRound():
         spawnBall(1, random.choice(BALL_SIZES))
     else:
         spawnBall(2, random.choice(BALL_SIZES))
+    for p in universe.particles:
+        if p.player == 1:
+            p1_b.append(p)
+        if p.player == 2:
+            p2_b.append(p)
 
-    return p1, p2
+    p1_s, p2_s, b_i_m = [], [], []
+
+    return p1, p2, p1_b, p2_b, p1_s, p2_s, b_i_m
 
 # Defining variables for later
 pygame.display.set_caption(WINDOW_TITLE)
@@ -188,6 +201,7 @@ p1_score, p2_score, p1_balls, p2_balls, balls_in_motion = [], [], [], [], []
 BALL_SIZES = ["s", "m", "l"]
 clock = pygame.time.Clock()
 real_fps = FPS
+delay, delay_max = 0, 5 # Another attempt to fix game end/round change bug when balls of equal mass collide
 paused = True
 debug_mode = False
 selected_particle = None
@@ -206,24 +220,17 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
-            #if not selected_particle == None:
-            #    real_fps = FPS / 3
             (mouseX, mouseY) = pygame.mouse.get_pos()
             selected_particle = universe.findParticle(mouseX, mouseY)
             if paused:
                 if mouseX < NEWROUND_IMG.get_size()[0] and mouseY > HEIGHT/2-NEWROUND_IMG.get_size()[1]/2 and mouseY < HEIGHT/2+NEWROUND_IMG.get_size()[1]/2:
-                    del p1_balls[:]
-                    del p2_balls[:]
-                    p1_turn, p2_turn = restartRound()
-                    del p1_score[:]
-                    del p2_score[:]
-                    del balls_in_motion[:]
-                    universe.p1_lives, universe.p2_lives = LIVES, LIVES
+                    p1_turn, p2_turn, p1_balls, p2_balls, p1_score, p2_score, balls_in_motion = restartRound()
                     paused = False
                 elif mouseX > WIDTH-QUIT_IMG.get_size()[0] and mouseY > HEIGHT/2-QUIT_IMG.get_size()[1]/2 and mouseY < HEIGHT/2+QUIT_IMG.get_size()[1]/2:
                     running = False
                 elif mouseY > (HEIGHT/5)*2 and mouseY < (HEIGHT/5)*3:
-                    paused = False
+                    if p1_turn or p2_turn:
+                        paused = False
             else:
                 if mouseY > (HEIGHT/5)*2 and mouseY < (HEIGHT/5)*3:
                     paused = True
@@ -232,19 +239,12 @@ while running:
             selected_particle = None
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
-                del p1_balls[:]
-                del p2_balls[:]
-                p1_turn, p2_turn = restartRound()
-                del p1_score[:]
-                del p2_score[:]
-                del balls_in_motion[:]
-                universe.p1_lives, universe.p2_lives = LIVES, LIVES
+                p1_turn, p2_turn, p1_balls, p2_balls, p1_score, p2_score, balls_in_motion = restartRound()
             elif event.key == pygame.K_d:
                 debug_mode = (True, False)[debug_mode]
             elif event.key == pygame.K_t:
                 p1_turn = (True, False)[p1_turn]
                 p2_turn = (True, False)[p2_turn]
-            elif event.key == pygame.K_SPACE:
                 paused = (True, False)[paused]
                 selected_particle = None
             elif event.key == pygame.K_ESCAPE:
@@ -289,14 +289,7 @@ while running:
 
     # PARTICLE LOGIC AND DRAWING
     for p in universe.particles:
-        #if p.player == 1: ##### OLD OBSOLETE?
-        #    p.colour = (P1_BALL_COLOUR[0], P1_BALL_COLOUR[1]+(BALL_HITPOINTS-p.hitpoints)*2, P1_BALL_COLOUR[2]+(BALL_HITPOINTS-p.hitpoints)*2)
-        #elif p.player == 2:
-        #    p.colour = (P2_BALL_COLOUR[0]+(BALL_HITPOINTS-p.hitpoints)*2, P2_BALL_COLOUR[1], P2_BALL_COLOUR[2]+(BALL_HITPOINTS-p.hitpoints)*2)
-
-        ###### Draws the balls ######
-        #pygame.draw.circle(screen, p.colour, (int(p.x), int(p.y)), p.size, 0)
-        if p.player == 1:
+        if p.player == 1: # Set corresponding scaled ball image to the right size
             if p.size == L_BALLSIZE:
                 scaled_ball_img = P1_L_IMG
             if p.size == M_BALLSIZE:
@@ -311,12 +304,16 @@ while running:
             if p.size == S_BALLSIZE:
                 scaled_ball_img = P2_S_IMG
 
+        # Determines the radius of the white circle, indicating damage
         scaled_by_hp = int(p.size-(p.size/(BALL_HITPOINTS/p.hitpoints)))
         scaled_dmg_ball_img = pygame.transform.scale(DMG_BALL_IMG, (scaled_by_hp*2, scaled_by_hp*2))
 
+        ###############################
+        # B A L L   R E N D E R I N G #
+        ###############################
         screen.blit(scaled_ball_img,(int(p.x)-p.size, int(p.y)-p.size))
         screen.blit(scaled_dmg_ball_img, (int(p.x)-scaled_by_hp, int(p.y)-scaled_by_hp))
-        #############################
+        ###############################
 
         # Score and turn
         if p.player == 1:
@@ -340,10 +337,10 @@ while running:
         # CHECK FOR BALLS WITHIN PLAYER AREAS
         if p.y < P_AREA_SIZE:   # Player 1
             if not p in p1_balls:
-                p1_balls.append(p)
+                p1_balls.append(p) # Adds to the list of usable balls
         else:
             if p in p1_balls:
-                p1_balls.remove(p)
+                p1_balls.remove(p) # Removes it if it's not in the area
         if p.y > HEIGHT-P_AREA_SIZE:   # Player 2
             if not p in p2_balls:
                 p2_balls.append(p)
@@ -352,7 +349,7 @@ while running:
                 p2_balls.remove(p)
 
 
-        # Removes the ball if it dies
+        # Removes the ball from all lists if it dies
         if p.hitpoints <= 0:
             if p in p1_score:
                 p1_score.remove(p)
@@ -371,23 +368,32 @@ while running:
         if not paused:
             if p1_turn:
                 if not len(balls_in_motion) > 0 and len(p1_balls) == 0:
-                    p1_turn = False
-                    p2_turn = True
-                    if universe.p2_lives > 0:
-                        spawnBall(2, random.choice(BALL_SIZES))
-                        p2_balls.append(p)
+                    delay += 1
+                    if delay == delay_max:
+                        p1_turn = False
+                        p2_turn = True
+                        if universe.p2_lives > 0:
+                            spawnBall(2, random.choice(BALL_SIZES))
+                            p2_balls.append(p)
+                        delay = 0
             elif p2_turn:
                 if not len(balls_in_motion) > 0 and len(p2_balls) == 0:
-                    p1_turn = True
-                    p2_turn = False
-                    if universe.p1_lives > 0:
-                        spawnBall(1, random.choice(BALL_SIZES))
-                        p1_balls.append(p)
+                    delay += 1
+                    if delay == delay_max:
+                        p1_turn = True
+                        p2_turn = False
+                        if universe.p1_lives > 0:
+                            spawnBall(1, random.choice(BALL_SIZES))
+                            p1_balls.append(p)
+                        delay = 0
 
         # Ends the round if no lives, no balls available and no ball is moving:
         if not len(balls_in_motion) > 0 and len(p1_balls) == 0 and len(p2_balls) == 0 and universe.p1_lives == 0 and universe.p2_lives == 0:
-            p1_turn, p2_turn = False, False
-            paused = True
+            delay += 1
+            if delay == delay_max:# Waits 5 frames to restart
+                p1_turn, p2_turn = False, False
+                paused = True
+                delay = 0
 
         # Make a list of balls that are in motion
         if p.speed > MOTION_TRESHOLD:
@@ -402,15 +408,15 @@ while running:
     except NameError:
         p1_score_len = 0
         p1_score_rotate = 0
-        score_label1 = OSD_FONT.render("{0}".format(len(p1_score)), 1, COURT_COLOUR)
+        score_label1 = OSD_FONT.render("{0}".format(len(p1_score)), 1, p1_score_colour)
         score_label1 = pygame.transform.rotozoom(score_label1, 180, 1)
 
     clock.tick(real_fps)
-    score_label2 = OSD_FONT.render("{1}".format(len(p1_score), len(p2_score)), 1, COURT_COLOUR)
+    score_label2 = OSD_FONT.render("{1}".format(len(p1_score), len(p2_score)), 1, p2_score_colour)
 
     if not paused: # Shows score on both sides, the top one rotated
         if len(p1_score) != p1_score_rotate:
-            score_label1 = OSD_FONT.render("{0}".format(len(p1_score)), 1, COURT_COLOUR)
+            score_label1 = OSD_FONT.render("{0}".format(len(p1_score)), 1, p1_score_colour)
             score_label1 = pygame.transform.rotozoom(score_label1, 180, 1) # rotate only on score update
             p1_score_rotate = len(p1_score)
         screen.blit(score_label1, (WIDTH-WIDTH/9, 0))
@@ -463,7 +469,7 @@ while running:
 
 
         # Shows the score in the middle of the screen instead
-        score_label1_normal = OSD_FONT.render("{0}".format(len(p1_score)), 1, COURT_COLOUR)
+        score_label1_normal = OSD_FONT.render("{0}".format(len(p1_score)), 1, p1_score_colour)
         screen.blit(score_label1_normal, (WIDTH/2-15, HEIGHT/2-HEIGHT/15))
         screen.blit(score_label2, (WIDTH/2-15, HEIGHT/2))
 
