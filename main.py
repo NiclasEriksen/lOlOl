@@ -263,7 +263,12 @@ while running:
             elif selected_particle.y > HEIGHT-P_AREA_SIZE and p2_turn:
                 selected_particle.mouseMove(pygame.mouse.get_pos())
 
-        universe.update()
+    for p in balls_in_motion: # Fix to avoid balls "lingering" when dead
+        if not p in universe.particles:
+            balls_in_motion.remove(p)
+            echo ("DOING IT")
+
+    universe.update()
 
     screen.fill(universe.colour)
 
@@ -392,20 +397,23 @@ while running:
             if p in balls_in_motion:
                 balls_in_motion.remove(p)
 
-    clock.tick(real_fps)
+    try:
+        p1_score_len
+    except NameError:
+        p1_score_len = 0
+        p1_score_rotate = 0
+        score_label1 = OSD_FONT.render("{0}".format(len(p1_score)), 1, COURT_COLOUR)
+        score_label1 = pygame.transform.rotozoom(score_label1, 180, 1)
 
-    score_label1 = OSD_FONT.render("{0}".format(len(p1_score), len(p2_score)), 1, COURT_COLOUR)
+    clock.tick(real_fps)
     score_label2 = OSD_FONT.render("{1}".format(len(p1_score), len(p2_score)), 1, COURT_COLOUR)
 
     if not paused: # Shows score on both sides, the top one rotated
-        try:
-            p1_score_len
-        except NameError:
-            p1_score_len = 0
-        if not len(p1_score) == p1_score_len:
+        if len(p1_score) != p1_score_rotate:
+            score_label1 = OSD_FONT.render("{0}".format(len(p1_score)), 1, COURT_COLOUR)
             score_label1 = pygame.transform.rotozoom(score_label1, 180, 1) # rotate only on score update
-            p1_score_len = len(p1_score)
-        screen.blit(score_label1, (WIDTH-WIDTH/8, 0))
+            p1_score_rotate = len(p1_score)
+        screen.blit(score_label1, (WIDTH-WIDTH/9, 0))
         screen.blit(score_label2, (20, int(HEIGHT-HEIGHT/15)))
 
 
@@ -455,7 +463,8 @@ while running:
 
 
         # Shows the score in the middle of the screen instead
-        screen.blit(score_label1, (WIDTH/2-15, HEIGHT/2-HEIGHT/15))
+        score_label1_normal = OSD_FONT.render("{0}".format(len(p1_score)), 1, COURT_COLOUR)
+        screen.blit(score_label1_normal, (WIDTH/2-15, HEIGHT/2-HEIGHT/15))
         screen.blit(score_label2, (WIDTH/2-15, HEIGHT/2))
 
     elif not paused:
