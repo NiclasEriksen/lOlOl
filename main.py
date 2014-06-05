@@ -31,9 +31,14 @@ pygame.init()
 
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
-(WIDTH, HEIGHT) = (720, 1280)
+(WIDTH, HEIGHT) = (768, 1280)
+(WIDTH, HEIGHT) = (480, 800)
 if android:
     if android.get_dpi() == 320:
+        (WIDTH, HEIGHT) = (768, 1184)
+    elif android.get_dpi() > 240:
+        (WIDTH, HEIGHT) = (800, 1280)
+    else:
         (WIDTH, HEIGHT) = (480, 800)
 
 #(WIDTH, HEIGHT) = (480, 800)
@@ -49,14 +54,15 @@ RANDOM_PLAYER_START = True
 P_AREA_SIZE = HEIGHT/6 # Size of the player area in relation to the height
 P1_COLOUR = "4f7ea9"
 P2_COLOUR = "ff9743"
-DARK_THEME = True
+DARK_THEME, darkness = True, 8
 
 ######### F I L E   L O A D I N G #########
 FONT_FILE = "./font.ttf"
 OSD_FONT_FILE = "./osd_font.ttf"
 FONT = pygame.font.Font(FONT_FILE, 15)
-OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/15))
-basePath = os.path.dirname(__file__)
+OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/14))
+OSD_FONT_L = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/10))
+OSD_FONT_S = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/20))
 
 if Image:
     ### HUE TESTING ###
@@ -81,11 +87,6 @@ else:
     P1_BALL_IMG = pygame.image.load('./img/p1_ball.png')
     P2_BALL_IMG = pygame.image.load('./img/p2_ball.png')
 
-
-#p1ballPath = os.path.join(basePath, "./img/red_ball.png") # P1 ball image
-#P1_BALL_IMG = pygame.image.load(p1ballPath)
-#p2ballPath = os.path.join(basePath, "./img/green_ball.png") # P2 ball image
-#P2_BALL_IMG = pygame.image.load(p2ballPath)
 DMG_BALL_IMG = pygame.image.load('./img/damaged_ball.png') # The damage indicator
 SPLASH_IMG = pygame.image.load('./android-presplash.jpg') # The sweet splash logo
 NEWROUND_IMG = pygame.image.load('./img/new_round.png')
@@ -107,34 +108,28 @@ P2_M_IMG = pygame.transform.scale(P2_BALL_IMG, (M_BALLSIZE*2, M_BALLSIZE*2))
 P2_S_IMG = pygame.transform.scale(P2_BALL_IMG, (S_BALLSIZE*2, S_BALLSIZE*2))
 
 ######### C O L O U R S #########
-#P1_BALL_COLOUR = (220,40,40)
-#P2_BALL_COLOUR = (40,220,40)
-#P1_WEAK_COLOUR = (220,110,110)
-#P2_WEAK_COLOUR = (110,220,110)
-P1_COLOUR_RGB = struct.unpack('BBB',P1_COLOUR.decode('hex'))
-P2_COLOUR_RGB = struct.unpack('BBB',P2_COLOUR.decode('hex'))
-darkness = 10
+p1_colour_rgb = struct.unpack('BBB',P1_COLOUR.decode('hex'))
+p2_colour_rgb = struct.unpack('BBB',P2_COLOUR.decode('hex'))
 if DARK_THEME:
-    P1_AREA_COLOUR = (int(P1_COLOUR_RGB[0]/darkness),int(P1_COLOUR_RGB[1]/darkness),int(P1_COLOUR_RGB[2]/darkness))
-    P2_AREA_COLOUR = (int(P2_COLOUR_RGB[0]/darkness),int(P2_COLOUR_RGB[1]/darkness),int(P2_COLOUR_RGB[2]/darkness))
+    P1_AREA_COLOUR = (int(p1_colour_rgb[0]/darkness),int(p1_colour_rgb[1]/darkness),int(p1_colour_rgb[2]/darkness))
+    P2_AREA_COLOUR = (int(p2_colour_rgb[0]/darkness),int(p2_colour_rgb[1]/darkness),int(p2_colour_rgb[2]/darkness))
 else:
-    P1_AREA_COLOUR = P1_COLOUR_RGB
-    P2_AREA_COLOUR = P2_COLOUR_RGB
-ACTIVE_AREA_COLOUR = (50,50,50)
+    P1_AREA_COLOUR = p1_colour_rgb
+    P2_AREA_COLOUR = p2_colour_rgb
+ACTIVE_AREA_COLOUR = (60,60,60)
 TEXT_COLOUR = (100,200,100)
-COURT_COLOUR = (200,200,200) # Lines and stuff
+COURT_COLOUR = (160,160,160) # Lines and stuff
+BG_COLOUR = (40,40,40)
 PAUSE_COLOUR = (160,160,160)
-if Image:
-    p1_score_colour = P1_COLOUR_RGB
-    p2_score_colour = P2_COLOUR_RGB
-else:
-    p1_score_colour, p2_score_colour = COURT_COLOUR, COURT_COLOUR
+
+p1_score_colour = p1_colour_rgb
+p2_score_colour = p2_colour_rgb
 
 ###################
 
 ######### P H Y S I C S #########
 universe = PyParticles.Environment((WIDTH, HEIGHT))
-universe.colour = (30,30,30)
+universe.colour = (BG_COLOUR)
 universe.addFunctions(['move','bounce','collide','drag'])
 universe.mass_of_air = 0.04
 universe.acceleration = (pi, 0.15)
@@ -208,7 +203,8 @@ def restartRound():
 pygame.display.set_caption(WINDOW_TITLE)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
-p1_score, p2_score, p1_balls, p2_balls, balls_in_motion = [], [], [], [], []
+p1_score_list, p2_score_list, p1_balls, p2_balls, balls_in_motion = [], [], [], [], []
+p1_score, p2_score = 0, 0
 BALL_SIZES = ["s", "m", "l"]
 clock = pygame.time.Clock()
 real_fps = FPS
@@ -236,7 +232,7 @@ while running:
             if paused:
                 # Button that starts new round
                 if mouseX < NEWROUND_IMG.get_size()[0] and mouseY > HEIGHT/2-NEWROUND_IMG.get_size()[1]/2 and mouseY < HEIGHT/2+NEWROUND_IMG.get_size()[1]/2:
-                    p1_turn, p2_turn, p1_balls, p2_balls, p1_score, p2_score, balls_in_motion = restartRound()
+                    p1_turn, p2_turn, p1_balls, p2_balls, p1_score_list, p2_score_list, balls_in_motion = restartRound()
                     paused = False
                 # Button that quits the game
                 elif mouseX > WIDTH-QUIT_IMG.get_size()[0] and mouseY > HEIGHT/2-QUIT_IMG.get_size()[1]/2 and mouseY < HEIGHT/2+QUIT_IMG.get_size()[1]/2:
@@ -253,7 +249,7 @@ while running:
             selected_particle = None
         if event.type == pygame.KEYDOWN:
             if event.key == pygame.K_r:
-                p1_turn, p2_turn, p1_balls, p2_balls, p1_score, p2_score, balls_in_motion = restartRound()
+                p1_turn, p2_turn, p1_balls, p2_balls, p1_score_list, p2_score_list, balls_in_motion = restartRound()
             elif event.key == pygame.K_d:
                 debug_mode = (True, False)[debug_mode]
             elif event.key == pygame.K_t:
@@ -277,12 +273,12 @@ while running:
             elif selected_particle.y > HEIGHT-P_AREA_SIZE and p2_turn:
                 selected_particle.mouseMove(pygame.mouse.get_pos())
 
-    for p in balls_in_motion: # Fix to avoid balls "lingering" when dead
-        if not p in universe.particles:
-            balls_in_motion.remove(p)
-            echo ("DOING IT")
+        for p in balls_in_motion: # Fix to avoid balls "lingering" when dead
+            if not p in universe.particles:
+                balls_in_motion.remove(p)
+                echo ("DOING IT")
 
-    universe.update()
+        universe.update()
 
     screen.fill(universe.colour)
 
@@ -302,139 +298,141 @@ while running:
         pygame.draw.rect(screen, ACTIVE_AREA_COLOUR, (0, HEIGHT-(P_AREA_SIZE-1), WIDTH, P_AREA_SIZE), 0)
 
     # PARTICLE LOGIC AND DRAWING
-    for p in universe.particles:
-        if p.player == 1: # Set corresponding scaled ball image to the right size
-            if p.size == L_BALLSIZE:
-                scaled_ball_img = P1_L_IMG
-            if p.size == M_BALLSIZE:
-                scaled_ball_img = P1_M_IMG
-            if p.size == S_BALLSIZE:
-                scaled_ball_img = P1_S_IMG
-        elif p.player == 2:
-            if p.size == L_BALLSIZE:
-                scaled_ball_img = P2_L_IMG
-            if p.size == M_BALLSIZE:
-                scaled_ball_img = P2_M_IMG
-            if p.size == S_BALLSIZE:
-                scaled_ball_img = P2_S_IMG
+    if not paused:
+        for p in universe.particles:
+            if p.player == 1: # Set corresponding scaled ball image to the right size
+                if p.size == L_BALLSIZE:
+                    scaled_ball_img = P1_L_IMG
+                if p.size == M_BALLSIZE:
+                    scaled_ball_img = P1_M_IMG
+                if p.size == S_BALLSIZE:
+                    scaled_ball_img = P1_S_IMG
+            elif p.player == 2:
+                if p.size == L_BALLSIZE:
+                    scaled_ball_img = P2_L_IMG
+                if p.size == M_BALLSIZE:
+                    scaled_ball_img = P2_M_IMG
+                if p.size == S_BALLSIZE:
+                    scaled_ball_img = P2_S_IMG
 
-        # Determines the radius of the white circle, indicating damage
-        scaled_by_hp = int(p.size-(p.size/(BALL_HITPOINTS/p.hitpoints)))
-        scaled_dmg_ball_img = pygame.transform.scale(DMG_BALL_IMG, (scaled_by_hp*2, scaled_by_hp*2))
+            # Determines the radius of the white circle, indicating damage
+            scaled_by_hp = int(p.size-(p.size/(BALL_HITPOINTS/p.hitpoints)))
+            scaled_dmg_ball_img = pygame.transform.scale(DMG_BALL_IMG, (scaled_by_hp*2, scaled_by_hp*2))
 
-        ###############################
-        # B A L L   R E N D E R I N G #
-        ###############################
-        screen.blit(scaled_ball_img,(int(p.x)-p.size, int(p.y)-p.size))
-        screen.blit(scaled_dmg_ball_img, (int(p.x)-scaled_by_hp, int(p.y)-scaled_by_hp))
-        ###############################
+            ###############################
+            # B A L L   R E N D E R I N G #
+            ###############################
+            screen.blit(scaled_ball_img,(int(p.x)-p.size, int(p.y)-p.size))
+            screen.blit(scaled_dmg_ball_img, (int(p.x)-scaled_by_hp, int(p.y)-scaled_by_hp))
+            ###############################
 
-        # Score and turn
-        if p.player == 1:
-            if p.y < HEIGHT-P_AREA_SIZE and p.y > HEIGHT/2:    # Player 1
-                if not p in p1_score:
-                    p1_score.append(p)
-                    p1_score_len = len(p1_score)
+            # Score and turn
+            if p.player == 1:
+                if p.y < HEIGHT-P_AREA_SIZE and p.y > HEIGHT/2:    # Player 1
+                    if not p in p1_score_list:
+                        p1_score_list.append(p)
+                        p1_score = len(p1_score_list)
+                else:
+                    if p in p1_score_list:
+                        p1_score_list.remove(p)
+                        p1_score = len(p1_score_list)
+
+            if p.player == 2:
+                if p.y > P_AREA_SIZE and p.y < HEIGHT/2:    # Player 2
+                    if not p in p2_score_list:
+                        p2_score_list.append(p)
+                        p2_score = len(p2_score_list)
+                else:
+                    if p in p2_score_list:
+                        p2_score_list.remove(p)
+                        p2_score = len(p2_score_list)
+
+            # CHECK FOR BALLS WITHIN PLAYER AREAS
+            if p.y < P_AREA_SIZE:   # Player 1
+                if not p in p1_balls:
+                    p1_balls.append(p) # Adds to the list of usable balls
             else:
-                if p in p1_score:
-                    p1_score.remove(p)
-                    p1_score_len = len(p1_score)
-
-        if p.player == 2:
-            if p.y > P_AREA_SIZE and p.y < HEIGHT/2:    # Player 2
-                if not p in p2_score:
-                    p2_score.append(p)
+                if p in p1_balls:
+                    p1_balls.remove(p) # Removes it if it's not in the area
+            if p.y > HEIGHT-P_AREA_SIZE:   # Player 2
+                if not p in p2_balls:
+                    p2_balls.append(p)
             else:
-                if p in p2_score:
-                    p2_score.remove(p)
-
-        # CHECK FOR BALLS WITHIN PLAYER AREAS
-        if p.y < P_AREA_SIZE:   # Player 1
-            if not p in p1_balls:
-                p1_balls.append(p) # Adds to the list of usable balls
-        else:
-            if p in p1_balls:
-                p1_balls.remove(p) # Removes it if it's not in the area
-        if p.y > HEIGHT-P_AREA_SIZE:   # Player 2
-            if not p in p2_balls:
-                p2_balls.append(p)
-        else:
-            if p in p2_balls:
-                p2_balls.remove(p)
+                if p in p2_balls:
+                    p2_balls.remove(p)
 
 
-        # Removes the ball from all lists if it dies
-        if p.hitpoints <= 0:
-            if p in p1_score:
-                p1_score.remove(p)
-            if p in p1_balls:
-                p1_balls.remove(p)
-            if p in p2_score:
-                p2_score.remove(p)
-            if p in p2_balls:
-                p2_balls.remove(p)
-            if p in balls_in_motion:
-                balls_in_motion.remove(p)
-            p.speed = 0
-            universe.particles.remove(p)
+            # Removes the ball from all lists if it dies
+            if p.hitpoints <= 0:
+                if p in p1_score_list:
+                    p1_score_list.remove(p)
+                if p in p1_balls:
+                    p1_balls.remove(p)
+                if p in p2_score_list:
+                    p2_score_list.remove(p)
+                if p in p2_balls:
+                    p2_balls.remove(p)
+                if p in balls_in_motion:
+                    balls_in_motion.remove(p)
+                p.speed = 0
+                universe.particles.remove(p)
 
-        # Changes turn and spawns ball if no balls are moving and none is available
-        if not paused:
-            if p1_turn:
-                if not len(balls_in_motion) > 0 and len(p1_balls) == 0:
-                    delay += 1
-                    if delay == delay_max:
-                        p1_turn = False
-                        p2_turn = True
-                        if universe.p2_lives > 0:
-                            spawnBall(2, random.choice(BALL_SIZES))
-                            p2_balls.append(p)
-                        delay = 0
-            elif p2_turn:
-                if not len(balls_in_motion) > 0 and len(p2_balls) == 0:
-                    delay += 1
-                    if delay == delay_max:
-                        p1_turn = True
-                        p2_turn = False
-                        if universe.p1_lives > 0:
-                            spawnBall(1, random.choice(BALL_SIZES))
-                            p1_balls.append(p)
-                        delay = 0
+            # Changes turn and spawns ball if no balls are moving and none is available
+            if not paused:
+                if p1_turn:
+                    if not len(balls_in_motion) > 0 and len(p1_balls) == 0:
+                        delay += 1
+                        if delay == delay_max:
+                            p1_turn = False
+                            p2_turn = True
+                            if universe.p2_lives > 0:
+                                spawnBall(2, random.choice(BALL_SIZES))
+                                p2_balls.append(p)
+                            delay = 0
+                elif p2_turn:
+                    if not len(balls_in_motion) > 0 and len(p2_balls) == 0:
+                        delay += 1
+                        if delay == delay_max:
+                            p1_turn = True
+                            p2_turn = False
+                            if universe.p1_lives > 0:
+                                spawnBall(1, random.choice(BALL_SIZES))
+                                p1_balls.append(p)
+                            delay = 0
 
-        # Ends the round if no lives, no balls available and no ball is moving:
-        if not len(balls_in_motion) > 0 and len(p1_balls) == 0 and len(p2_balls) == 0 and universe.p1_lives == 0 and universe.p2_lives == 0:
-            delay += 1
-            if delay == delay_max:# Waits 5 frames to restart
-                p1_turn, p2_turn = False, False
-                paused = True
-                delay = 0
+            # Ends the round if no lives, no balls available and no ball is moving:
+            if not len(balls_in_motion) > 0 and len(p1_balls) == 0 and len(p2_balls) == 0 and universe.p1_lives == 0 and universe.p2_lives == 0:
+                delay += 1
+                if delay == delay_max:# Waits 5 frames to restart
+                    p1_turn, p2_turn = False, False
+                    paused = True
+                    delay = 0
 
-        # Make a list of balls that are in motion
-        if p.speed > MOTION_TRESHOLD:
-            if not p in balls_in_motion:
-                balls_in_motion.append(p)
-        else:
-            if p in balls_in_motion:
-                balls_in_motion.remove(p)
+            # Make a list of balls that are in motion
+            if p.speed > MOTION_TRESHOLD:
+                if not p in balls_in_motion:
+                    balls_in_motion.append(p)
+            else:
+                if p in balls_in_motion:
+                    balls_in_motion.remove(p)
 
-    try:
-        p1_score_len
-    except NameError:
-        p1_score_len = 0
-        p1_score_rotate = 0
-        score_label1 = OSD_FONT.render("{0}".format(len(p1_score)), 1, p1_score_colour)
-        score_label1 = pygame.transform.rotozoom(score_label1, 180, 1)
+        try:
+            p1_score_rotate
+        except NameError:
+            p1_score_rotate = 0
+            score_label1 = OSD_FONT.render("{0}".format(p1_score), 1, p1_score_colour)
+            score_label1 = pygame.transform.rotozoom(score_label1, 180, 1)
+
+        if not paused: # Shows score on both sides, the top one rotated
+            if p1_score != p1_score_rotate:
+                score_label1 = OSD_FONT.render("{0}".format(p1_score), 1, p1_score_colour)
+                score_label1 = pygame.transform.rotozoom(score_label1, 180, 1) # rotate only on score update
+                p1_score_rotate = p1_score
+            score_label2 = OSD_FONT.render("{0}".format(p2_score), 1, p2_score_colour)
+            screen.blit(score_label1, (WIDTH-WIDTH/9, 0))
+            screen.blit(score_label2, (20, int(HEIGHT-HEIGHT/15)))
 
     clock.tick(real_fps)
-    score_label2 = OSD_FONT.render("{1}".format(len(p1_score), len(p2_score)), 1, p2_score_colour)
-
-    if not paused: # Shows score on both sides, the top one rotated
-        if len(p1_score) != p1_score_rotate:
-            score_label1 = OSD_FONT.render("{0}".format(len(p1_score)), 1, p1_score_colour)
-            score_label1 = pygame.transform.rotozoom(score_label1, 180, 1) # rotate only on score update
-            p1_score_rotate = len(p1_score)
-        screen.blit(score_label1, (WIDTH-WIDTH/9, 0))
-        screen.blit(score_label2, (20, int(HEIGHT-HEIGHT/15)))
 
 
     # PAUSE MENU, INCLUDING ANIMATION
@@ -483,13 +481,27 @@ while running:
 
 
         # Shows the score in the middle of the screen instead
-        score_label1_normal = OSD_FONT.render("{0}".format(len(p1_score)), 1, p1_score_colour)
-        score_label1_shadow = OSD_FONT.render("{0}".format(len(p1_score)), 1, (60,60,60))
-        score_label2_shadow = OSD_FONT.render("{0}".format(len(p2_score)), 1, (60,60,60))
-        screen.blit(score_label1_shadow, ((WIDTH/2-15)+1, (HEIGHT/2-HEIGHT/15)+1))
-        screen.blit(score_label1_normal, (WIDTH/2-15, HEIGHT/2-HEIGHT/15))
-        screen.blit(score_label2_shadow, ((WIDTH/2-15)+1, (HEIGHT/2)+1))
-        screen.blit(score_label2, (WIDTH/2-15, HEIGHT/2))
+        score_font1, score_font2 = OSD_FONT, OSD_FONT
+        if p1_score == p2_score:
+            score_font1 = OSD_FONT
+            score_font2 = OSD_FONT
+        elif p1_score > p2_score:
+            score_font1 = OSD_FONT_L
+            score_font2 = OSD_FONT_S
+        else:
+            score_font1 = OSD_FONT_S
+            score_font2 = OSD_FONT_L
+        score_label1_normal = score_font1.render("{0}".format(p1_score), 1, p1_score_colour)
+        score_label2_normal = score_font2.render("{0}".format(p2_score), 1, p2_score_colour)
+        score_label1_shadow = score_font1.render("{0}".format(p1_score), 1, (60,60,60))
+        score_label2_shadow = score_font2.render("{0}".format(p2_score), 1, (60,60,60))
+        score1_width = score_label1_normal.get_width() # For centering
+        score1_height = score_label1_normal.get_height()
+        score2_width = score_label2_normal.get_width()
+        screen.blit(score_label1_shadow, ((WIDTH/2-score1_width/2)+1, (HEIGHT/2-score1_height)+1))
+        screen.blit(score_label1_normal, (WIDTH/2-score1_width/2, HEIGHT/2-score1_height))
+        screen.blit(score_label2_shadow, ((WIDTH/2-score2_width/2)+1, (HEIGHT/2)+1))
+        screen.blit(score_label2_normal, (WIDTH/2-score2_width/2, HEIGHT/2))
 
     elif not paused:
         if pause_rect1 > 0:
@@ -536,19 +548,19 @@ while running:
         g_p1_rect = (bar_p1_x, bar_p1_y+bar_h, bar_w, bar_h)
         b_p1_rect = (bar_p1_x, bar_p1_y+bar_h*2, bar_w, bar_h)
         rgb_p1_rect = (bar_p1_x-bar_w/2, bar_p1_y, bar_w/2, bar_h*3)
-        pygame.draw.rect(screen, (P1_COLOUR_RGB[0], 0, 0), r_p1_rect, 0)
-        pygame.draw.rect(screen, (0, P1_COLOUR_RGB[1], 0), g_p1_rect, 0)
-        pygame.draw.rect(screen, (0, 0, P1_COLOUR_RGB[2]), b_p1_rect, 0)
-        pygame.draw.rect(screen, P1_COLOUR_RGB, rgb_p1_rect, 0)
+        pygame.draw.rect(screen, (p1_colour_rgb[0], 0, 0), r_p1_rect, 0)
+        pygame.draw.rect(screen, (0, p1_colour_rgb[1], 0), g_p1_rect, 0)
+        pygame.draw.rect(screen, (0, 0, p1_colour_rgb[2]), b_p1_rect, 0)
+        pygame.draw.rect(screen, p1_colour_rgb, rgb_p1_rect, 0)
         #P2
         r_p2_rect = (bar_p2_x, bar_p2_y-bar_h, bar_w, bar_h)
         g_p2_rect = (bar_p2_x, bar_p2_y-bar_h*2, bar_w, bar_h)
         b_p2_rect = (bar_p2_x, bar_p2_y-bar_h*3, bar_w, bar_h)
         rgb_p2_rect = (bar_p2_x+bar_w, bar_p2_y-bar_h*3, bar_w/2, bar_h*3)
-        pygame.draw.rect(screen, (P2_COLOUR_RGB[0], 0, 0), r_p2_rect, 0)
-        pygame.draw.rect(screen, (0, P2_COLOUR_RGB[1], 0), g_p2_rect, 0)
-        pygame.draw.rect(screen, (0, 0, P2_COLOUR_RGB[2]), b_p2_rect, 0)
-        pygame.draw.rect(screen, P2_COLOUR_RGB, rgb_p2_rect, 0)
+        pygame.draw.rect(screen, (p2_colour_rgb[0], 0, 0), r_p2_rect, 0)
+        pygame.draw.rect(screen, (0, p2_colour_rgb[1], 0), g_p2_rect, 0)
+        pygame.draw.rect(screen, (0, 0, p2_colour_rgb[2]), b_p2_rect, 0)
+        pygame.draw.rect(screen, p2_colour_rgb, rgb_p2_rect, 0)
 
     # LAST OF ALL, THE GRITTY NOISE FILTER WEEEE
     if NOISE:
