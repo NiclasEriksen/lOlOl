@@ -10,10 +10,15 @@ except ImportError:
     android = None
 # Check for PIL, not working on android yet
 try:
-    import Image, PyColorize
+    from PIL import Image
+    import PyColorize
 except ImportError:
-    Image = None
-    print ("Not generating colored balls/court")
+    try:
+        import Image
+        import PyColorize
+    except ImportError:
+        Image = None
+        print ("PIL not found, not generating colored balls/court.")
 
 # Android stuff
 TIMEREVENT = pygame.USEREVENT
@@ -21,18 +26,23 @@ TIMEREVENT = pygame.USEREVENT
 if android:
     android.init()
     android.map_key(android.KEYCODE_BACK, pygame.K_ESCAPE)
+    print ("DPI:{0}".format(android.get_dpi()))
 pygame.init()
 
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
 (WIDTH, HEIGHT) = (720, 1280)
+if android:
+    if android.get_dpi() == 320:
+        (WIDTH, HEIGHT) = (480, 800)
+
 #(WIDTH, HEIGHT) = (480, 800)
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
 FPS = 60
 NOISE = False # Noise filter, destroys performance
 L_BALLSIZE = int(HEIGHT/30)
-M_BALLSIZE = int(HEIGHT/50)
-S_BALLSIZE = int(HEIGHT/90)
+M_BALLSIZE = int(HEIGHT/45)
+S_BALLSIZE = int(HEIGHT/80)
 LIVES = 8
 BALL_HITPOINTS = 50
 RANDOM_PLAYER_START = True
@@ -55,6 +65,7 @@ if Image:
     result_image_path = './img/p1_ball.png'
     result = PyColorize.image_tint(input_image_path, '#%s' % P1_COLOUR)
     if os.path.exists(result_image_path):  # delete any previous result file
+        result = PyColorize.image_tint(input_image_path, '#%s' % P1_COLOUR)
         os.remove(result_image_path)
     result.save(result_image_path)  # file name's extension determines format
     P1_BALL_IMG = pygame.image.load(result_image_path)
@@ -75,17 +86,14 @@ else:
 #P1_BALL_IMG = pygame.image.load(p1ballPath)
 #p2ballPath = os.path.join(basePath, "./img/green_ball.png") # P2 ball image
 #P2_BALL_IMG = pygame.image.load(p2ballPath)
-dmgballPath = os.path.join(basePath, "./img/damaged_ball.png") # The damage indicator
-DMG_BALL_IMG = pygame.image.load(dmgballPath)
-splashPath = os.path.join(basePath, "./android-presplash.jpg") # The sweet splash logo
-SPLASH_IMG = pygame.image.load(splashPath)
+DMG_BALL_IMG = pygame.image.load('./img/damaged_ball.png') # The damage indicator
+SPLASH_IMG = pygame.image.load('./android-presplash.jpg') # The sweet splash logo
 NEWROUND_IMG = pygame.image.load('./img/new_round.png')
 QUIT_IMG = pygame.image.load('./img/quit.png')
 
 if NOISE: # Aah, the things we do for grittyness
-    noisePath = os.path.join(basePath, "./img/noise.png")
-    noisescaledPath = os.path.join(basePath, "./img/noise_scaled.png")
-    NOISE_IMG = pygame.image.load(noisePath)
+    noisescaledPath = './img/noise_scaled.png'
+    NOISE_IMG = pygame.image.load('./img/noise.png')
     noise_img_scaled = pygame.transform.scale(NOISE_IMG, (WIDTH, HEIGHT))
     pygame.image.save(noise_img_scaled, noisescaledPath)
     NOISE_IMG = pygame.image.load(noisescaledPath)
@@ -134,6 +142,9 @@ universe.global_elasticity = False
 MOTION_TRESHOLD = 0.05
 
 # CLUTTER
+def Quit():
+    print ("Exiting cleanly...")
+    return False
 def spawnBall(p, s):
     spawn = True
     if s == "s":
@@ -218,16 +229,19 @@ while running:
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
-            running = False
+            running = Quit()
         if event.type == pygame.MOUSEBUTTONDOWN:
             (mouseX, mouseY) = pygame.mouse.get_pos()
             selected_particle = universe.findParticle(mouseX, mouseY)
             if paused:
+                # Button that starts new round
                 if mouseX < NEWROUND_IMG.get_size()[0] and mouseY > HEIGHT/2-NEWROUND_IMG.get_size()[1]/2 and mouseY < HEIGHT/2+NEWROUND_IMG.get_size()[1]/2:
                     p1_turn, p2_turn, p1_balls, p2_balls, p1_score, p2_score, balls_in_motion = restartRound()
                     paused = False
+                # Button that quits the game
                 elif mouseX > WIDTH-QUIT_IMG.get_size()[0] and mouseY > HEIGHT/2-QUIT_IMG.get_size()[1]/2 and mouseY < HEIGHT/2+QUIT_IMG.get_size()[1]/2:
-                    running = False
+                    running = Quit()
+                # Area that unpauses the game
                 elif mouseY > (HEIGHT/5)*2 and mouseY < (HEIGHT/5)*3:
                     if p1_turn or p2_turn:
                         paused = False
@@ -248,7 +262,7 @@ while running:
                 paused = (True, False)[paused]
                 selected_particle = None
             elif event.key == pygame.K_ESCAPE:
-                running = False
+                running = Quit()
             elif event.key == pygame.K_1:
                 spawnBall(1, random.choice(BALL_SIZES))
             elif event.key == pygame.K_2:
@@ -470,7 +484,11 @@ while running:
 
         # Shows the score in the middle of the screen instead
         score_label1_normal = OSD_FONT.render("{0}".format(len(p1_score)), 1, p1_score_colour)
+        score_label1_shadow = OSD_FONT.render("{0}".format(len(p1_score)), 1, (60,60,60))
+        score_label2_shadow = OSD_FONT.render("{0}".format(len(p2_score)), 1, (60,60,60))
+        screen.blit(score_label1_shadow, ((WIDTH/2-15)+1, (HEIGHT/2-HEIGHT/15)+1))
         screen.blit(score_label1_normal, (WIDTH/2-15, HEIGHT/2-HEIGHT/15))
+        screen.blit(score_label2_shadow, ((WIDTH/2-15)+1, (HEIGHT/2)+1))
         screen.blit(score_label2, (WIDTH/2-15, HEIGHT/2))
 
     elif not paused:

@@ -1,4 +1,4 @@
-from PIL import Image
+import Image
 from ImageColor import getcolor, getrgb
 from ImageOps import grayscale
 
