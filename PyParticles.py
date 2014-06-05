@@ -7,6 +7,19 @@ try:
 except ImportError:
     android = None
 
+VIBRATE = True
+SOUND = True
+
+if SOUND:
+    try:
+        import pygame.mixer as mixer
+    except ImportError:
+        import android.mixer as mixer
+
+    mixer.pre_init(44100, -16, 2, 2048)
+    mixer.init()
+    BOP_SOUND = mixer.Sound('./sound/bop.ogg')
+
 def addVectors(v1, v2):
     """ Returns the sum of two vectors """
     
@@ -59,8 +72,13 @@ def collide(p1, p2):
         p1.y -= math.cos(angle)*overlap
         p2.x -= math.sin(angle)*overlap
         p2.y += math.cos(angle)*overlap
-        if android:
-            android.vibrate(0.05)
+        ### VIBRATION
+        if VIBRATE:
+            if android:
+                android.vibrate(0.05)
+        if SOUND:
+            if not mixer.get_busy():
+                BOP_SOUND.play()
 
 class Particle:
     """ A circular object with a velocity, size and mass """
