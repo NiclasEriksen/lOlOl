@@ -51,6 +51,7 @@ NOISE = False # Noise filter, destroys performance
 L_BALLSIZE = int(HEIGHT/30)
 M_BALLSIZE = int(HEIGHT/45)
 S_BALLSIZE = int(HEIGHT/80)
+HL_SIZE = 2 # Ball in score field highlight width
 LIVES = 8
 BALL_HITPOINTS = 50
 RANDOM_PLAYER_START = True
@@ -173,13 +174,13 @@ ER_L_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE
 ER_M_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
 ER_S_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
 
-P1_HL_L_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (L_BALLSIZE*2+2, L_BALLSIZE*2+2))
-P1_HL_M_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (M_BALLSIZE*2+2, M_BALLSIZE*2+2))
-P1_HL_S_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (S_BALLSIZE*2+2, S_BALLSIZE*2+2))
+P1_HL_L_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (L_BALLSIZE*2+HL_SIZE*2, L_BALLSIZE*2+HL_SIZE*2))
+P1_HL_M_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (M_BALLSIZE*2+HL_SIZE*2, M_BALLSIZE*2+HL_SIZE*2))
+P1_HL_S_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (S_BALLSIZE*2+HL_SIZE*2, S_BALLSIZE*2+HL_SIZE*2))
 
-P2_HL_L_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (L_BALLSIZE*2+2, L_BALLSIZE*2+2))
-P2_HL_M_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (M_BALLSIZE*2+2, M_BALLSIZE*2+2))
-P2_HL_S_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (S_BALLSIZE*2+2, S_BALLSIZE*2+2))
+P2_HL_L_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (L_BALLSIZE*2+HL_SIZE*2, L_BALLSIZE*2+HL_SIZE*2))
+P2_HL_M_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (M_BALLSIZE*2+HL_SIZE*2, M_BALLSIZE*2+HL_SIZE*2))
+P2_HL_S_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (S_BALLSIZE*2+HL_SIZE*2, S_BALLSIZE*2+HL_SIZE*2))
 
 ######### C O L O U R S #########
 p1_colour_rgb = struct.unpack('BBB',P1_COLOUR.decode('hex'))
@@ -427,7 +428,7 @@ while running:
                             p1_highlight_img = P1_HL_M_IMG
                         elif p.size == S_BALLSIZE:
                             p1_highlight_img = P1_HL_S_IMG
-                        screen.blit(p1_highlight_img, ((int(p.x)-p.size)-1, (int(p.y)-p.size)-1))
+                        screen.blit(p1_highlight_img, ((int(p.x)-p.size)-HL_SIZE, (int(p.y)-p.size)-HL_SIZE))
                     if p.player == 2:
                         if p.size == L_BALLSIZE:
                             p2_highlight_img = P2_HL_L_IMG
@@ -435,7 +436,7 @@ while running:
                             p2_highlight_img = P2_HL_M_IMG
                         elif p.size == S_BALLSIZE:
                             p2_highlight_img = P2_HL_S_IMG
-                        screen.blit(p2_highlight_img, ((int(p.x)-p.size)-1, (int(p.y)-p.size)-1))
+                        screen.blit(p2_highlight_img, ((int(p.x)-p.size)-HL_SIZE, (int(p.y)-p.size)-HL_SIZE))
                     #pygame.draw.circle(screen, (220,220,220), (int(p.x), int(p.y)), p.size+2, 0)
                 screen.blit(scaled_ball_img,(int(p.x)-p.size, int(p.y)-p.size))
                 screen.blit(scaled_dmg_ball_img, (int(p.x)-scaled_by_hp, int(p.y)-scaled_by_hp))
