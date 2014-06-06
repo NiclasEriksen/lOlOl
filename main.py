@@ -35,14 +35,14 @@ pygame.init()
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
 (WIDTH, HEIGHT) = (768, 1280)
-(WIDTH, HEIGHT) = (480, 800)
-if android:
-    if android.get_dpi() == 320:
-        (WIDTH, HEIGHT) = (768, 1184)
-    elif android.get_dpi() > 240:
-        (WIDTH, HEIGHT) = (800, 1280)
-    else:
-        (WIDTH, HEIGHT) = (480, 800)
+#(WIDTH, HEIGHT) = (480, 800)
+#if android:
+#    if android.get_dpi() == 320:
+#        (WIDTH, HEIGHT) = (720, 1280)
+#    elif android.get_dpi() > 240:
+#        (WIDTH, HEIGHT) = (720, 1280)
+#    else:
+#        (WIDTH, HEIGHT) = (480, 800)
 
 #(WIDTH, HEIGHT) = (480, 800)
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
@@ -57,7 +57,8 @@ RANDOM_PLAYER_START = True
 P_AREA_SIZE = HEIGHT/6 # Size of the player area in relation to the height
 P1_COLOUR = "4f7ea9"
 P2_COLOUR = "ff9743"
-DARK_THEME, darkness = True, 8
+#P2_COLOUR = "c39783"
+DARK_THEME, darkness = True, 15
 PyParticles.VIBRATE = True
 PyParticles.SOUND = True
 SOUND, VIBRATE = PyParticles.SOUND, PyParticles.VIBRATE
@@ -69,12 +70,22 @@ FONT = pygame.font.Font(FONT_FILE, 15)
 OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/14))
 OSD_FONT_L = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/10))
 OSD_FONT_S = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/20))
+BTN_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/24))
 
+DMG_BALL_IMG = pygame.image.load('./img/damaged_ball.png') # The damage indicator
+SPLASH_IMG = pygame.image.load('./img/splash.png') # The sweet splash logo
+NEWROUND_IMG = pygame.image.load('./img/new_round.png')
+QUIT_IMG = pygame.image.load('./img/quit.png')
+SOUND_IMG = pygame.image.load('./img/sound.png')
+VIBRATE_IMG = pygame.image.load('./img/vibrate.png')
+SOUND_OFF_IMG = pygame.image.load('./img/sound_off.png')
+VIBRATE_OFF_IMG = pygame.image.load('./img/vibrate_off.png')
+
+input_image_l = './img/new_ball_raw.png'
+input_image_m = './img/new_ball_raw_m.png'
+input_image_s = './img/new_ball_raw_s.png'
 if Image:
     ### HUE TESTING ###
-    input_image_l = './img/new_ball_raw.png'
-    input_image_m = './img/new_ball_raw_m.png'
-    input_image_s = './img/new_ball_raw_s.png'
     # Colorizing P1
     result_image_path = './img/p1_ball_l.png'
     result = PyColorize.image_tint(input_image_l, '#%s' % P1_COLOUR)
@@ -114,6 +125,20 @@ if Image:
         os.remove(result_image_path)
     result.save(result_image_path)  # file name's extension determines format
     P2_BALL_IMG_S = pygame.image.load(result_image_path)
+    # HIGHLIGHT
+    HIGHLIGHT_BALL = './img/damaged_ball.png'
+    result_image_path = './img/p1_highlight.png'
+    result = PyColorize.image_tint(HIGHLIGHT_BALL, '#%s' % P1_COLOUR)
+    if os.path.exists(result_image_path):
+        os.remove(result_image_path)
+    result.save(result_image_path)
+    P1_HIGHLIGHT_IMG = pygame.image.load(result_image_path)
+    result_image_path = './img/p2_highlight.png'
+    result = PyColorize.image_tint(HIGHLIGHT_BALL, '#%s' % P2_COLOUR)
+    if os.path.exists(result_image_path):
+        os.remove(result_image_path)
+    result.save(result_image_path)
+    P2_HIGHLIGHT_IMG = pygame.image.load(result_image_path)
     
 else:
     P1_BALL_IMG_L = pygame.image.load('./img/p1_ball_l.png')
@@ -122,15 +147,12 @@ else:
     P2_BALL_IMG_L = pygame.image.load('./img/p2_ball_l.png')
     P2_BALL_IMG_M = pygame.image.load('./img/p2_ball_m.png')
     P2_BALL_IMG_S = pygame.image.load('./img/p2_ball_s.png')
+    P1_HIGHLIGHT_IMG = pygame.image.load('./img/p1_highlight.png')
+    P2_HIGHLIGHT_IMG = pygame.image.load('./img/p2_highlight.png')
 
-DMG_BALL_IMG = pygame.image.load('./img/damaged_ball.png') # The damage indicator
-SPLASH_IMG = pygame.image.load('./android-presplash.jpg') # The sweet splash logo
-NEWROUND_IMG = pygame.image.load('./img/new_round.png')
-QUIT_IMG = pygame.image.load('./img/quit.png')
-SOUND_IMG = pygame.image.load('./img/sound.png')
-VIBRATE_IMG = pygame.image.load('./img/vibrate.png')
-SOUND_OFF_IMG = pygame.image.load('./img/sound_off.png')
-VIBRATE_OFF_IMG = pygame.image.load('./img/vibrate_off.png')
+ENDROUND_BALL_IMG_L = pygame.image.load(input_image_l)
+ENDROUND_BALL_IMG_M = pygame.image.load(input_image_m)
+ENDROUND_BALL_IMG_S = pygame.image.load(input_image_s)
 
 if NOISE: # Aah, the things we do for grittyness
     noisescaledPath = './img/noise_scaled.png'
@@ -147,21 +169,33 @@ P2_L_IMG = pygame.transform.scale(P2_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE*2))
 P2_M_IMG = pygame.transform.scale(P2_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
 P2_S_IMG = pygame.transform.scale(P2_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
 
+ER_L_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE*2))
+ER_M_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
+ER_S_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
+
+P1_HL_L_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (L_BALLSIZE*2+2, L_BALLSIZE*2+2))
+P1_HL_M_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (M_BALLSIZE*2+2, M_BALLSIZE*2+2))
+P1_HL_S_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (S_BALLSIZE*2+2, S_BALLSIZE*2+2))
+
+P2_HL_L_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (L_BALLSIZE*2+2, L_BALLSIZE*2+2))
+P2_HL_M_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (M_BALLSIZE*2+2, M_BALLSIZE*2+2))
+P2_HL_S_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (S_BALLSIZE*2+2, S_BALLSIZE*2+2))
+
 ######### C O L O U R S #########
 p1_colour_rgb = struct.unpack('BBB',P1_COLOUR.decode('hex'))
 p2_colour_rgb = struct.unpack('BBB',P2_COLOUR.decode('hex'))
+BG_COLOUR = (40,40,40)
 if DARK_THEME:
-    P1_AREA_COLOUR = (int(p1_colour_rgb[0]/darkness),int(p1_colour_rgb[1]/darkness),int(p1_colour_rgb[2]/darkness))
-    P2_AREA_COLOUR = (int(p2_colour_rgb[0]/darkness),int(p2_colour_rgb[1]/darkness),int(p2_colour_rgb[2]/darkness))
+    P1_AREA_COLOUR = (int(BG_COLOUR[0]+p1_colour_rgb[0]/darkness),int(BG_COLOUR[1]+p1_colour_rgb[1]/darkness),int(BG_COLOUR[2]+p1_colour_rgb[2]/darkness))
+    P2_AREA_COLOUR = (int(BG_COLOUR[0]+p2_colour_rgb[0]/darkness),int(BG_COLOUR[1]+p2_colour_rgb[1]/darkness),int(BG_COLOUR[2]+p2_colour_rgb[2]/darkness))
 else:
     P1_AREA_COLOUR = p1_colour_rgb
     P2_AREA_COLOUR = p2_colour_rgb
 ACTIVE_AREA_COLOUR = (60,60,60)
 TEXT_COLOUR = (100,200,100)
 COURT_COLOUR = (160,160,160) # Lines and stuff
-BG_COLOUR = (40,40,40)
-PAUSE_COLOUR = (160,160,160)
 
+PAUSE_COLOUR = (160,160,160)
 p1_score_colour = p1_colour_rgb
 p2_score_colour = p2_colour_rgb
 
@@ -171,10 +205,19 @@ p2_score_colour = p2_colour_rgb
 universe = PyParticles.Environment((WIDTH, HEIGHT))
 universe.colour = (BG_COLOUR)
 universe.addFunctions(['move','bounce','collide','drag'])
-universe.mass_of_air = 0.04
+if HEIGHT > 1000:
+    universe.mass_of_air = 0.04
+else:
+    universe.mass_of_air = 0.06
 universe.acceleration = (pi, 0.15)
 universe.global_elasticity = False
-MOTION_TRESHOLD = 0.05
+MOTION_TRESHOLD = 0.06
+
+endroundballs = PyParticles.Environment((WIDTH, HEIGHT))
+endroundballs.addFunctions(['move','bounce','collide','drag','accelerate'])
+endroundballs.mass_of_air = 0.03
+endroundballs.acceleration = universe.acceleration
+endroundballs.global_elasticity = universe.global_elasticity
 
 # CLUTTER
 def Quit():
@@ -184,15 +227,15 @@ def spawnBall(p, s):
     spawn = True
     if s == "s":
         size = S_BALLSIZE
-        mass = 20
+        mass = 30
         elasticity = 1
     elif s == "m":
         size = M_BALLSIZE
-        mass = 40
+        mass = 60
         elasticity = 0.9
     else:
         size = L_BALLSIZE
-        mass = 70
+        mass = 120
         elasticity = 0.8
     if p == 1:
         player = 1
@@ -210,7 +253,7 @@ def spawnBall(p, s):
             universe.p2_lives -= 1
 
     if spawn:
-        universe.addParticles(mass=mass, player=player, hp=BALL_HITPOINTS, size=size, speed=0, x=WIDTH/2, y=y, elasticity=elasticity)
+        universe.addParticles(mass=mass, player=player, hp=BALL_HITPOINTS, size=size, speed=0, x=WIDTH/2, y=y, elasticity=elasticity, vibrate=VIBRATE, sound=SOUND)
 
 def restartRound():
     p1, p2 = False, False
@@ -254,6 +297,7 @@ debug_mode = False
 selected_particle = None
 running = True
 firstrun = True
+roundstarted = False
 p1_turn, p2_turn = False, False
 
 ######### MAIN LOOP #########
@@ -304,7 +348,6 @@ while running:
                 firstrun = False
             elif event.key == pygame.K_d:
                 debug_mode = (True, False)[debug_mode]
-                BOP_SOUND.play()
             elif event.key == pygame.K_t:
                 p1_turn = (True, False)[p1_turn]
                 p2_turn = (True, False)[p2_turn]
@@ -356,26 +399,44 @@ while running:
             if p.player == 1: # Set corresponding scaled ball image to the right size
                 if p.size == L_BALLSIZE:
                     scaled_ball_img = P1_L_IMG
-                if p.size == M_BALLSIZE:
+                elif p.size == M_BALLSIZE:
                     scaled_ball_img = P1_M_IMG
-                if p.size == S_BALLSIZE:
+                elif p.size == S_BALLSIZE:
                     scaled_ball_img = P1_S_IMG
             elif p.player == 2:
                 if p.size == L_BALLSIZE:
                     scaled_ball_img = P2_L_IMG
-                if p.size == M_BALLSIZE:
+                elif p.size == M_BALLSIZE:
                     scaled_ball_img = P2_M_IMG
-                if p.size == S_BALLSIZE:
+                elif p.size == S_BALLSIZE:
                     scaled_ball_img = P2_S_IMG
 
             # Determines the radius of the white circle, indicating damage
-            if p.hitpoints > 0:
+            if p.hitpoints > 1:
                 scaled_by_hp = int(p.size-(p.size/(BALL_HITPOINTS/p.hitpoints)))
                 scaled_dmg_ball_img = pygame.transform.scale(DMG_BALL_IMG, (scaled_by_hp*2, scaled_by_hp*2))
 
                 ###############################
                 # B A L L   R E N D E R I N G #
                 ###############################
+                if p in p1_score_list or p in p2_score_list:
+                    if p.player == 1:
+                        if p.size == L_BALLSIZE:
+                            p1_highlight_img = P1_HL_L_IMG
+                        elif p.size == M_BALLSIZE:
+                            p1_highlight_img = P1_HL_M_IMG
+                        elif p.size == S_BALLSIZE:
+                            p1_highlight_img = P1_HL_S_IMG
+                        screen.blit(p1_highlight_img, ((int(p.x)-p.size)-1, (int(p.y)-p.size)-1))
+                    if p.player == 2:
+                        if p.size == L_BALLSIZE:
+                            p2_highlight_img = P2_HL_L_IMG
+                        elif p.size == M_BALLSIZE:
+                            p2_highlight_img = P2_HL_M_IMG
+                        elif p.size == S_BALLSIZE:
+                            p2_highlight_img = P2_HL_S_IMG
+                        screen.blit(p2_highlight_img, ((int(p.x)-p.size)-1, (int(p.y)-p.size)-1))
+                    #pygame.draw.circle(screen, (220,220,220), (int(p.x), int(p.y)), p.size+2, 0)
                 screen.blit(scaled_ball_img,(int(p.x)-p.size, int(p.y)-p.size))
                 screen.blit(scaled_dmg_ball_img, (int(p.x)-scaled_by_hp, int(p.y)-scaled_by_hp))
                 ###############################
@@ -414,6 +475,7 @@ while running:
             else:
                 if p in p2_balls:
                     p2_balls.remove(p)
+
 
 
             # Removes the ball from all lists if it dies
@@ -457,11 +519,20 @@ while running:
             # Ends the round if no lives, no balls available and no ball is moving:
             if not len(balls_in_motion) > 0 and len(p1_balls) == 0 and len(p2_balls) == 0 and universe.p1_lives == 0 and universe.p2_lives == 0:
                 delay += 1
-                if delay == delay_max:# Waits 5 frames to restart
+                if delay == delay_max:# Waits 5 frames to end
                     p1_turn, p2_turn = False, False
-                    sleep(1.5)
+                    sleep(0.5)
                     paused = True
                     delay = 0
+                    del endroundballs.particles[:]
+                    for p in universe.particles:
+                        endroundballs.addParticles(mass=100, player=p.player, hp=BALL_HITPOINTS, size=p.size, speed=0, x=p.x, y=p.y, elasticity=p.elasticity, vibrate=False, sound=False)
+                    if p1_score > p2_score:
+                        endroundballs.acceleration = (pi, -0.20)
+                    elif p2_score > p1_score:
+                        endroundballs.acceleration = (pi, 0.20)
+                    else:
+                        endroundballs.acceleration = (pi, 0)
 
             # Make a list of balls that are in motion
             if p.speed > MOTION_TRESHOLD:
@@ -470,6 +541,13 @@ while running:
             else:
                 if p in balls_in_motion:
                     balls_in_motion.remove(p)
+
+        for p in p1_balls:
+            if not p in universe.particles:
+                p1_balls.remove(p)
+        for p in p2_balls:
+            if not p in universe.particles:
+                p2_balls.remove(p)
 
         try:
             p1_score_rotate
@@ -508,6 +586,28 @@ while running:
         if pause_rect2 < HEIGHT/2:
             pause_rect2 += int(HEIGHT/30)
 
+        test = True
+        if test:
+            if not p1_turn and not p2_turn:
+                for p in endroundballs.particles:
+                    p.sound = False
+                    p.vibrate = False
+                    p.hitpoints -= 0.1
+                    if p.hitpoints <= 1:
+                        endroundballs.particles.remove(p)
+
+                    if p.size == L_BALLSIZE:
+                        scaled_er_img = ER_L_IMG
+                    if p.size == M_BALLSIZE:
+                        scaled_er_img = ER_M_IMG
+                    if p.size == S_BALLSIZE:
+                        scaled_er_img = ER_S_IMG
+
+                    screen.blit(scaled_er_img,(int(p.x)-p.size, int(p.y)-p.size))
+                    #pygame.draw.circle(screen, (30,30,30), (int(p.x), int(p.y)), int(p.size), 0)
+
+                endroundballs.update()
+
         # SOUND AND VIBRATE TOGGLE
         if SOUND:
             cur_snd_img = SOUND_IMG
@@ -522,28 +622,33 @@ while running:
 
         # BUTTON TRIANGLES
         button_width = NEWROUND_IMG.get_size()[0]
+        pause_anim_max = button_width
         button_height = NEWROUND_IMG.get_size()[1]
         try:
             pause_anim
         except NameError:
-            pause_anim = button_width
+            pause_anim = pause_anim_max
         try:
             quit_anim
         except NameError:
-            quit_anim = button_width
+            quit_anim = pause_anim_max
 
         screen.blit(NEWROUND_IMG, ((0-button_width)+pause_anim, int(HEIGHT/2-button_height/2)))
-        newround_label = FONT.render("NEW", 1, (220,220,220))
-        screen.blit(newround_label, ((30-button_width)+pause_anim, HEIGHT/2-8))
+        newround_label = BTN_FONT.render("NEW", 1, (220,220,220))
+        newround_label_shadow = BTN_FONT.render("NEW", 1, (30,30,30))
+        screen.blit(newround_label_shadow, (((button_width/2-newround_label.get_width()/2)-button_width)+pause_anim+1, (HEIGHT/2-newround_label.get_height()/2)+1))
+        screen.blit(newround_label, (((button_width/2-newround_label.get_width()/2)-button_width)+pause_anim, HEIGHT/2-newround_label.get_height()/2))
         
         screen.blit(QUIT_IMG, (WIDTH-pause_anim, int(HEIGHT/2-button_height/2)))
-        quit_label = FONT.render("QUIT", 1, (220,220,220))
-        screen.blit(quit_label, ((WIDTH+button_width)-67-pause_anim, HEIGHT/2-8))
+        quit_label = BTN_FONT.render("QUIT", 1, (220,220,220))
+        quit_label_shadow = BTN_FONT.render("QUIT", 1, (30,30,30))
+        screen.blit(quit_label_shadow, (((WIDTH+button_width)-(button_width/2+quit_label.get_width()/2)-pause_anim)+1, (HEIGHT/2-quit_label.get_height()/2)+1))
+        screen.blit(quit_label, ((WIDTH+button_width)-(button_width/2+quit_label.get_width()/2)-pause_anim, HEIGHT/2-quit_label.get_height()/2))
         
-        if pause_anim < button_width:
-            pause_anim += int(button_width/15)
-        elif pause_anim > button_width:
-            pause_anim = button_width
+        if pause_anim < pause_anim_max:
+            pause_anim += int(pause_anim_max/15)
+        elif pause_anim > pause_anim_max:
+            pause_anim = pause_anim_max
 
 
 
@@ -553,23 +658,38 @@ while running:
             if p1_score == p2_score: # These are for enlarging the score of the leader/winner
                 score_font1 = OSD_FONT
                 score_font2 = OSD_FONT
+                pol_weight_t, pol_weight_b = int((HEIGHT/10)*(float(pause_anim)/float(pause_anim_max))), int((HEIGHT/10)*(float(pause_anim)/float(pause_anim_max)))
             elif p1_score > p2_score:
                 score_font1 = OSD_FONT_L
                 score_font2 = OSD_FONT_S
+                pol_weight_b, pol_weight_t = int((HEIGHT/12)*(float(pause_anim)/float(pause_anim_max))), int((HEIGHT/8)*(float(pause_anim)/float(pause_anim_max)))
             else:
                 score_font1 = OSD_FONT_S
                 score_font2 = OSD_FONT_L
+                pol_weight_t, pol_weight_b = int((HEIGHT/12)*(float(pause_anim)/float(pause_anim_max))), int((HEIGHT/8)*(float(pause_anim)/float(pause_anim_max)))
             score_label1_normal = score_font1.render("{0}".format(p1_score), 1, p1_score_colour)
             score_label2_normal = score_font2.render("{0}".format(p2_score), 1, p2_score_colour)
-            score_label1_shadow = score_font1.render("{0}".format(p1_score), 1, (60,60,60))
-            score_label2_shadow = score_font2.render("{0}".format(p2_score), 1, (60,60,60))
+            score_label1_shadow = score_font1.render("{0}".format(p1_score), 1, (100,100,100))
+            score_label2_shadow = score_font2.render("{0}".format(p2_score), 1, (100,100,100))
             score1_width = score_label1_normal.get_width() # For centering
             score1_height = score_label1_normal.get_height()
             score2_width = score_label2_normal.get_width()
-            screen.blit(score_label1_shadow, ((WIDTH/2-score1_width/2)+1, (HEIGHT/2-score1_height)+1))
-            screen.blit(score_label1_normal, (WIDTH/2-score1_width/2, HEIGHT/2-score1_height))
-            screen.blit(score_label2_shadow, ((WIDTH/2-score2_width/2)+1, (HEIGHT/2)+1))
-            screen.blit(score_label2_normal, (WIDTH/2-score2_width/2, HEIGHT/2))
+
+            pol_l = (NEWROUND_IMG.get_size()[0], HEIGHT/2)
+            pol_t = (WIDTH/2, HEIGHT/2-pol_weight_t)
+            pol_r = (WIDTH-NEWROUND_IMG.get_size()[0], HEIGHT/2)
+            pol_b = (WIDTH/2, HEIGHT/2+pol_weight_b)
+
+            pygame.draw.polygon(screen, (220,220,220), (pol_l, pol_t, pol_r, pol_b), 2)
+
+            if pause_anim >= button_width:
+                pygame.draw.line(screen, (220,220,220), (int(WIDTH/2-15), int(HEIGHT/2)), (int(WIDTH/2+15), int(HEIGHT/2)), 2)
+                screen.blit(score_label1_shadow, ((WIDTH/2-score1_width/2)+1, (HEIGHT/2-score1_height)+1))
+                screen.blit(score_label1_normal, (WIDTH/2-score1_width/2, HEIGHT/2-score1_height))
+                screen.blit(score_label2_shadow, ((WIDTH/2-score2_width/2)+1, (HEIGHT/2)+1))
+                screen.blit(score_label2_normal, (WIDTH/2-score2_width/2, HEIGHT/2))
+
+            roundstarted = True
 
     elif not paused:
         if pause_rect1 > 0:
@@ -582,13 +702,29 @@ while running:
         if pause_anim > 0:
             screen.blit(NEWROUND_IMG, ((0-button_width)+pause_anim, int(HEIGHT/2-(NEWROUND_IMG.get_size()[1]/2))))
             screen.blit(QUIT_IMG, (WIDTH-pause_anim, int(HEIGHT/2-button_height/2)))
-            screen.blit(newround_label, ((30-button_width)+pause_anim, HEIGHT/2-8))
-            screen.blit(quit_label, ((WIDTH+button_width)-67-pause_anim, HEIGHT/2-8))
+            screen.blit(newround_label_shadow, (((button_width/2-newround_label.get_width()/2)-button_width)+pause_anim+1, (HEIGHT/2-newround_label.get_height()/2)+1))
+            screen.blit(newround_label, (((button_width/2-newround_label.get_width()/2)-button_width)+pause_anim, HEIGHT/2-newround_label.get_height()/2))
+            screen.blit(quit_label_shadow, (((WIDTH+button_width)-(button_width/2+quit_label.get_width()/2)-pause_anim)+1, (HEIGHT/2-quit_label.get_height()/2)+1))
+            screen.blit(quit_label, ((WIDTH+button_width)-(button_width/2+quit_label.get_width()/2)-pause_anim, HEIGHT/2-quit_label.get_height()/2))
+
+            if not firstrun and roundstarted:
+                if p1_score == p2_score: # These are for enlarging the score of the leader/winner
+                    pol_weight_t, pol_weight_b = int((HEIGHT/10)*(float(pause_anim)/float(pause_anim_max))), int((HEIGHT/10)*(float(pause_anim)/float(pause_anim_max)))
+                elif p1_score > p2_score:
+                    pol_weight_b, pol_weight_t = int((HEIGHT/12)*(float(pause_anim)/float(pause_anim_max))), int((HEIGHT/8)*(float(pause_anim)/float(pause_anim_max)))
+                else:
+                    pol_weight_t, pol_weight_b = int((HEIGHT/12)*(float(pause_anim)/float(pause_anim_max))), int((HEIGHT/8)*(float(pause_anim)/float(pause_anim_max)))
+                pol_l = (NEWROUND_IMG.get_size()[0], HEIGHT/2)
+                pol_t = (WIDTH/2, HEIGHT/2-pol_weight_t)
+                pol_r = (WIDTH-NEWROUND_IMG.get_size()[0], HEIGHT/2)
+                pol_b = (WIDTH/2, HEIGHT/2+pol_weight_b)
+                pygame.draw.polygon(screen, (220,220,220), (pol_l, pol_t, pol_r, pol_b), 2)
+
             pause_anim -= int(WIDTH/30)
 
     # Renders the sweet ass splash img
     if pause_rect1 > 0:
-            screen.blit(SPLASH_IMG, (WIDTH/2-128, (-368+pause_rect1)))
+            screen.blit(SPLASH_IMG, (WIDTH/2-128, (-(HEIGHT/2.2)+pause_rect1)))
 
     if debug_mode: # DEBUG MODE PSD TEXT
         fps_label = FONT.render("FPS: %i" % round(clock.get_fps()), 1, TEXT_COLOUR)
@@ -597,15 +733,17 @@ while running:
         p2_balls_label = FONT.render("P2 balls: %i" % len(p2_balls), 1, TEXT_COLOUR)
         p1_lives_label = FONT.render("P1 lives: %i" % universe.p1_lives, 1, TEXT_COLOUR)
         p2_lives_label = FONT.render("P2 lives: %i" % universe.p2_lives, 1, TEXT_COLOUR)
+        bim_label = FONT.render("Balls in motion: %i" % len(balls_in_motion), 1, TEXT_COLOUR)
         screen.blit(fps_label, (10, 10))
         screen.blit(particles_on_screen, (10, 35))
         screen.blit(p1_balls_label, (10, 60))
         screen.blit(p2_balls_label, (10, 85))
         screen.blit(p1_lives_label, (10, 110))
         screen.blit(p2_lives_label, (10, 135))
+        screen.blit(bim_label, (10, 160))
 
         # COLOR CHOOSER
-        bar_h = 40
+        """bar_h = 40
         bar_w = WIDTH/5
         bar_p1_x = WIDTH/2+WIDTH/5
         bar_p1_y = HEIGHT-HEIGHT/5
@@ -628,7 +766,7 @@ while running:
         pygame.draw.rect(screen, (p2_colour_rgb[0], 0, 0), r_p2_rect, 0)
         pygame.draw.rect(screen, (0, p2_colour_rgb[1], 0), g_p2_rect, 0)
         pygame.draw.rect(screen, (0, 0, p2_colour_rgb[2]), b_p2_rect, 0)
-        pygame.draw.rect(screen, p2_colour_rgb, rgb_p2_rect, 0)
+        pygame.draw.rect(screen, p2_colour_rgb, rgb_p2_rect, 0)"""
 
     # LAST OF ALL, THE GRITTY NOISE FILTER WEEEE
     if NOISE:

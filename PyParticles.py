@@ -73,10 +73,10 @@ def collide(p1, p2):
         p2.x -= math.sin(angle)*overlap
         p2.y += math.cos(angle)*overlap
         ### VIBRATION
-        if VIBRATE:
+        if VIBRATE and p1.vibrate and p2.vibrate:
             if android:
                 android.vibrate(0.05)
-        if SOUND:
+        if SOUND and p1.sound and p2.sound:
             if not mixer.get_busy():
                 BOP_SOUND.play()
 
@@ -94,6 +94,8 @@ class Particle:
         self.mass = mass
         self.drag = 1
         self.elasticity = 0.9
+        self.sound = True
+        self.vibrate = True
 
     def move(self):
         """ Update position based on speed, angle """
