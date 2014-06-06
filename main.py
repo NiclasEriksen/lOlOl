@@ -677,9 +677,9 @@ while running:
             score1_height = score_label1_normal.get_height()
             score2_width = score_label2_normal.get_width()
 
-            pol_l = (NEWROUND_IMG.get_size()[0], HEIGHT/2)
+            pol_l = (pause_anim, HEIGHT/2)
             pol_t = (WIDTH/2, HEIGHT/2-pol_weight_t)
-            pol_r = (WIDTH-NEWROUND_IMG.get_size()[0], HEIGHT/2)
+            pol_r = (WIDTH-pause_anim, HEIGHT/2)
             pol_b = (WIDTH/2, HEIGHT/2+pol_weight_b)
 
             pygame.draw.polygon(screen, (220,220,220), (pol_l, pol_t, pol_r, pol_b), 2)
@@ -716,9 +716,9 @@ while running:
                     pol_weight_b, pol_weight_t = int((HEIGHT/12)*(float(pause_anim)/float(pause_anim_max))), int((HEIGHT/8)*(float(pause_anim)/float(pause_anim_max)))
                 else:
                     pol_weight_t, pol_weight_b = int((HEIGHT/12)*(float(pause_anim)/float(pause_anim_max))), int((HEIGHT/8)*(float(pause_anim)/float(pause_anim_max)))
-                pol_l = (NEWROUND_IMG.get_size()[0], HEIGHT/2)
+                pol_l = (pause_anim, HEIGHT/2)
                 pol_t = (WIDTH/2, HEIGHT/2-pol_weight_t)
-                pol_r = (WIDTH-NEWROUND_IMG.get_size()[0], HEIGHT/2)
+                pol_r = (WIDTH-pause_anim, HEIGHT/2)
                 pol_b = (WIDTH/2, HEIGHT/2+pol_weight_b)
                 pygame.draw.polygon(screen, (220,220,220), (pol_l, pol_t, pol_r, pol_b), 2)
 
