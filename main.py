@@ -673,6 +673,8 @@ while running:
             score_label2_normal = score_font2.render("{0}".format(p2_score), 1, p2_score_colour)
             score_label1_shadow = score_font1.render("{0}".format(p1_score), 1, (100,100,100))
             score_label2_shadow = score_font2.render("{0}".format(p2_score), 1, (100,100,100))
+            score_label1_highlight = score_font1.render("{0}".format(p1_score), 1, (200,200,200))
+            score_label2_highlight = score_font2.render("{0}".format(p2_score), 1, (200,200,200))
             score1_width = score_label1_normal.get_width() # For centering
             score1_height = score_label1_normal.get_height()
             score2_width = score_label2_normal.get_width()
@@ -682,12 +684,15 @@ while running:
             pol_r = (WIDTH-pause_anim, HEIGHT/2)
             pol_b = (WIDTH/2, HEIGHT/2+pol_weight_b)
 
+            pygame.draw.polygon(screen, (150,150,150), (pol_l, pol_t, pol_r, pol_b), 0)
             pygame.draw.polygon(screen, (220,220,220), (pol_l, pol_t, pol_r, pol_b), 2)
 
             if pause_anim >= button_width:
                 pygame.draw.line(screen, (220,220,220), (int(WIDTH/2-15), int(HEIGHT/2)), (int(WIDTH/2+15), int(HEIGHT/2)), 2)
+                screen.blit(score_label1_highlight, ((WIDTH/2-score1_width/2)-1, (HEIGHT/2-score1_height)-1))
                 screen.blit(score_label1_shadow, ((WIDTH/2-score1_width/2)+1, (HEIGHT/2-score1_height)+1))
                 screen.blit(score_label1_normal, (WIDTH/2-score1_width/2, HEIGHT/2-score1_height))
+                screen.blit(score_label2_highlight, ((WIDTH/2-score2_width/2)-1, (HEIGHT/2)-1))
                 screen.blit(score_label2_shadow, ((WIDTH/2-score2_width/2)+1, (HEIGHT/2)+1))
                 screen.blit(score_label2_normal, (WIDTH/2-score2_width/2, HEIGHT/2))
 
@@ -720,6 +725,7 @@ while running:
                 pol_t = (WIDTH/2, HEIGHT/2-pol_weight_t)
                 pol_r = (WIDTH-pause_anim, HEIGHT/2)
                 pol_b = (WIDTH/2, HEIGHT/2+pol_weight_b)
+                pygame.draw.polygon(screen, (150,150,150), (pol_l, pol_t, pol_r, pol_b), 0)
                 pygame.draw.polygon(screen, (220,220,220), (pol_l, pol_t, pol_r, pol_b), 2)
 
             pause_anim -= int(WIDTH/30)
