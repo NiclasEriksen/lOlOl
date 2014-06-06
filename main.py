@@ -647,6 +647,8 @@ while running:
         
         if pause_anim < pause_anim_max:
             pause_anim += int(pause_anim_max/15)
+            if pause_anim > pause_anim_max:
+                pause_anim = pause_anim_max
         elif pause_anim > pause_anim_max:
             pause_anim = pause_anim_max
 
