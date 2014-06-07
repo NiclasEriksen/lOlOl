@@ -35,7 +35,7 @@ pygame.init()
 ######### S E T T I N G S #########
 #(WIDTH, HEIGHT) = (800, 1280)
 (WIDTH, HEIGHT) = (768, 1280)
-#(WIDTH, HEIGHT) = (480, 800)
+(WIDTH, HEIGHT) = (480, 800)
 #if android:
 #    if android.get_dpi() == 320:
 #        (WIDTH, HEIGHT) = (720, 1280)
@@ -51,13 +51,14 @@ NOISE = False # Noise filter, destroys performance
 L_BALLSIZE = int(HEIGHT/30)
 M_BALLSIZE = int(HEIGHT/45)
 S_BALLSIZE = int(HEIGHT/80)
-HL_SIZE = 2 # Ball in score field highlight width
+HL_SIZE = 4 # Ball in score field highlight width
 LIVES = 8
 BALL_HITPOINTS = 50
 RANDOM_PLAYER_START = True
 P_AREA_SIZE = HEIGHT/6 # Size of the player area in relation to the height
-P1_COLOUR = "4f7ea9"
-P2_COLOUR = "ff9743"
+P1_COLOUR = "963640"
+#P2_COLOUR = "ff9743"
+P2_COLOUR = "94B362"
 #P2_COLOUR = "c39783"
 DARK_THEME, darkness = True, 15
 PyParticles.VIBRATE = True

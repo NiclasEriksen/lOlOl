@@ -19,6 +19,7 @@ if SOUND:
     mixer.pre_init(44100, -16, 2, 2048)
     mixer.init()
     BOP_SOUND = mixer.Sound('./sound/bop.ogg')
+    DEATH_SOUND = mixer.Sound('./sound/death.ogg')
 
 def addVectors(v1, v2):
     """ Returns the sum of two vectors """
@@ -61,6 +62,7 @@ def collide(p1, p2):
         (p2.angle, p2.speed, p1.angle, p1.speed) = (p2angle, p2speed, p1angle, p1speed)
 
         elasticity = p2.elasticity * p1.elasticity
+        total_speed = (p1.speed + p2.speed)
 
         p1.hitpoints -= elasticity*2
         p2.hitpoints -= elasticity*2
@@ -77,7 +79,14 @@ def collide(p1, p2):
             if android:
                 android.vibrate(0.05)
         if SOUND and p1.sound and p2.sound:
+            if p1.hitpoints <= 0 or p2.hitpoints <= 0:
+                DEATH_SOUND.play()
             if not mixer.get_busy():
+                vol = float((total_speed*2)/100)
+                if vol > 100:
+                    vol = 100
+                print (vol)
+                BOP_SOUND.set_volume(vol)
                 BOP_SOUND.play()
 
 class Particle:
