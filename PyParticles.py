@@ -85,7 +85,6 @@ def collide(p1, p2):
                 vol = float((total_speed*2)/100)
                 if vol > 100:
                     vol = 100
-                print (vol)
                 BOP_SOUND.set_volume(vol)
                 BOP_SOUND.play()
 

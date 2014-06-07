@@ -1,7 +1,7 @@
 import pygame
 from pygame import transform
 import PyParticles
-import random, os, struct
+import random, os, struct, sys
 from time import sleep
 from math import pi
 # Check for android module and does stuff
@@ -11,17 +11,15 @@ except ImportError:
     android = None
 # Check for PIL, not working on android yet
 try:
-    from PIL import Image
+    import Image
     import PyColorize
 except ImportError:
     try:
-        import Image
+        from PIL import Image
         import PyColorize
     except ImportError:
         Image = None
-        print ("PIL not found, not generating colored balls/court.")
-
-# Sound
+        print ("PIL not found, using preloaded colored balls/court.")
 
 # Android stuff
 TIMEREVENT = pygame.USEREVENT
@@ -29,7 +27,7 @@ TIMEREVENT = pygame.USEREVENT
 if android:
     android.init()
     android.map_key(android.KEYCODE_BACK, pygame.K_ESCAPE)
-    print ("DPI:{0}".format(android.get_dpi()))
+    print ("Android device detexted. DPI:{0}".format(android.get_dpi()))
 pygame.init()
 
 ######### S E T T I N G S #########
@@ -43,8 +41,8 @@ pygame.init()
 #        (WIDTH, HEIGHT) = (720, 1280)
 #    else:
 #        (WIDTH, HEIGHT) = (480, 800)
-
 #(WIDTH, HEIGHT) = (480, 800)
+print ("Window dimensions: {0}px/{1}px".format(WIDTH, HEIGHT))
 WINDOW_TITLE = "LOLOL, like OLO, but it's not OLO"
 FPS = 60
 NOISE = False # Noise filter, destroys performance
@@ -61,127 +59,133 @@ P1_COLOUR = "963640"
 P2_COLOUR = "94B362"
 #P2_COLOUR = "c39783"
 DARK_THEME, darkness = True, 15
-PyParticles.VIBRATE = True
-PyParticles.SOUND = True
-SOUND, VIBRATE = PyParticles.SOUND, PyParticles.VIBRATE
-
+VIBRATE = True
+SOUND = True
 ######### F I L E   L O A D I N G #########
-FONT_FILE = "./font.ttf"
-OSD_FONT_FILE = "./osd_font.ttf"
-FONT = pygame.font.Font(FONT_FILE, 15)
-OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/14))
-OSD_FONT_L = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/10))
-OSD_FONT_S = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/20))
-BTN_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/24))
+SETTINGS_PATH = 'settings.db'
+try:# Checking if any files won't load
+    FONT_FILE = "./font.ttf"
+    OSD_FONT_FILE = "./osd_font.ttf"
+    FONT = pygame.font.Font(FONT_FILE, 15)
+    OSD_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/14))
+    OSD_FONT_L = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/10))
+    OSD_FONT_S = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/20))
+    BTN_FONT = pygame.font.Font(OSD_FONT_FILE, int(HEIGHT/24))
 
-DMG_BALL_IMG = pygame.image.load('./img/damaged_ball.png') # The damage indicator
-SPLASH_IMG = pygame.image.load('./img/splash.png') # The sweet splash logo
-NEWROUND_IMG = pygame.image.load('./img/new_round.png')
-QUIT_IMG = pygame.image.load('./img/quit.png')
-SOUND_IMG = pygame.image.load('./img/sound.png')
-VIBRATE_IMG = pygame.image.load('./img/vibrate.png')
-SOUND_OFF_IMG = pygame.image.load('./img/sound_off.png')
-VIBRATE_OFF_IMG = pygame.image.load('./img/vibrate_off.png')
+    DMG_BALL_IMG = pygame.image.load('./img/damaged_ball.png') # The damage indicator
+    SPLASH_IMG = pygame.image.load('./img/splash.png') # The sweet splash logo
+    NEWROUND_IMG = pygame.image.load('./img/new_round.png')
+    QUIT_IMG = pygame.image.load('./img/quit.png')
+    SOUND_IMG = pygame.image.load('./img/sound.png')
+    VIBRATE_IMG = pygame.image.load('./img/vibrate.png')
+    SOUND_OFF_IMG = pygame.image.load('./img/sound_off.png')
+    VIBRATE_OFF_IMG = pygame.image.load('./img/vibrate_off.png')
 
-input_image_l = './img/new_ball_raw.png'
-input_image_m = './img/new_ball_raw_m.png'
-input_image_s = './img/new_ball_raw_s.png'
-if Image:
-    ### HUE TESTING ###
-    # Colorizing P1
-    result_image_path = './img/p1_ball_l.png'
-    result = PyColorize.image_tint(input_image_l, '#%s' % P1_COLOUR)
-    if os.path.exists(result_image_path):  # delete any previous result file
-        os.remove(result_image_path)
-    result.save(result_image_path)  # file name's extension determines format
-    P1_BALL_IMG_L = pygame.image.load(result_image_path)
-    result_image_path = './img/p1_ball_m.png'
-    result = PyColorize.image_tint(input_image_m, '#%s' % P1_COLOUR)
-    if os.path.exists(result_image_path):  # delete any previous result file
-        os.remove(result_image_path)
-    result.save(result_image_path)  # file name's extension determines format
-    P1_BALL_IMG_M = pygame.image.load(result_image_path)
-    result_image_path = './img/p1_ball_s.png'
-    result = PyColorize.image_tint(input_image_s, '#%s' % P1_COLOUR)
-    if os.path.exists(result_image_path):  # delete any previous result file
-        os.remove(result_image_path)
-    result.save(result_image_path)  # file name's extension determines format
-    P1_BALL_IMG_S = pygame.image.load(result_image_path)
+    input_image_l = './img/new_ball_raw.png'
+    input_image_m = './img/new_ball_raw_m.png'
+    input_image_s = './img/new_ball_raw_s.png'
+    if Image:
+        ### HUE TESTING ###
+        # Colorizing P1
+        result_image_path = './img/p1_ball_l.png'
+        result = PyColorize.image_tint(input_image_l, '#%s' % P1_COLOUR)
+        if os.path.exists(result_image_path):  # delete any previous result file
+            os.remove(result_image_path)
+        result.save(result_image_path)  # file name's extension determines format
+        P1_BALL_IMG_L = pygame.image.load(result_image_path)
+        result_image_path = './img/p1_ball_m.png'
+        result = PyColorize.image_tint(input_image_m, '#%s' % P1_COLOUR)
+        if os.path.exists(result_image_path):  # delete any previous result file
+            os.remove(result_image_path)
+        result.save(result_image_path)  # file name's extension determines format
+        P1_BALL_IMG_M = pygame.image.load(result_image_path)
+        result_image_path = './img/p1_ball_s.png'
+        result = PyColorize.image_tint(input_image_s, '#%s' % P1_COLOUR)
+        if os.path.exists(result_image_path):  # delete any previous result file
+            os.remove(result_image_path)
+        result.save(result_image_path)  # file name's extension determines format
+        P1_BALL_IMG_S = pygame.image.load(result_image_path)
 
-    # Colorizing P2
-    result_image_path = './img/p2_ball_l.png'
-    result = PyColorize.image_tint(input_image_l, '#%s' % P2_COLOUR)
-    if os.path.exists(result_image_path):  # delete any previous result file
-        os.remove(result_image_path)
-    result.save(result_image_path)  # file name's extension determines format
-    P2_BALL_IMG_L = pygame.image.load(result_image_path)
-    result_image_path = './img/p2_ball_m.png'
-    result = PyColorize.image_tint(input_image_m, '#%s' % P2_COLOUR)
-    if os.path.exists(result_image_path):  # delete any previous result file
-        os.remove(result_image_path)
-    result.save(result_image_path)  # file name's extension determines format
-    P2_BALL_IMG_M = pygame.image.load(result_image_path)
-    result_image_path = './img/p2_ball_s.png'
-    result = PyColorize.image_tint(input_image_s, '#%s' % P2_COLOUR)
-    if os.path.exists(result_image_path):  # delete any previous result file
-        os.remove(result_image_path)
-    result.save(result_image_path)  # file name's extension determines format
-    P2_BALL_IMG_S = pygame.image.load(result_image_path)
-    # HIGHLIGHT
-    HIGHLIGHT_BALL = './img/damaged_ball.png'
-    result_image_path = './img/p1_highlight.png'
-    result = PyColorize.image_tint(HIGHLIGHT_BALL, '#%s' % P1_COLOUR)
-    if os.path.exists(result_image_path):
-        os.remove(result_image_path)
-    result.save(result_image_path)
-    P1_HIGHLIGHT_IMG = pygame.image.load(result_image_path)
-    result_image_path = './img/p2_highlight.png'
-    result = PyColorize.image_tint(HIGHLIGHT_BALL, '#%s' % P2_COLOUR)
-    if os.path.exists(result_image_path):
-        os.remove(result_image_path)
-    result.save(result_image_path)
-    P2_HIGHLIGHT_IMG = pygame.image.load(result_image_path)
-    
-else:
-    P1_BALL_IMG_L = pygame.image.load('./img/p1_ball_l.png')
-    P1_BALL_IMG_M = pygame.image.load('./img/p1_ball_m.png')
-    P1_BALL_IMG_S = pygame.image.load('./img/p1_ball_s.png')
-    P2_BALL_IMG_L = pygame.image.load('./img/p2_ball_l.png')
-    P2_BALL_IMG_M = pygame.image.load('./img/p2_ball_m.png')
-    P2_BALL_IMG_S = pygame.image.load('./img/p2_ball_s.png')
-    P1_HIGHLIGHT_IMG = pygame.image.load('./img/p1_highlight.png')
-    P2_HIGHLIGHT_IMG = pygame.image.load('./img/p2_highlight.png')
+        # Colorizing P2
+        result_image_path = './img/p2_ball_l.png'
+        result = PyColorize.image_tint(input_image_l, '#%s' % P2_COLOUR)
+        if os.path.exists(result_image_path):  # delete any previous result file
+            os.remove(result_image_path)
+        result.save(result_image_path)  # file name's extension determines format
+        P2_BALL_IMG_L = pygame.image.load(result_image_path)
+        result_image_path = './img/p2_ball_m.png'
+        result = PyColorize.image_tint(input_image_m, '#%s' % P2_COLOUR)
+        if os.path.exists(result_image_path):  # delete any previous result file
+            os.remove(result_image_path)
+        result.save(result_image_path)  # file name's extension determines format
+        P2_BALL_IMG_M = pygame.image.load(result_image_path)
+        result_image_path = './img/p2_ball_s.png'
+        result = PyColorize.image_tint(input_image_s, '#%s' % P2_COLOUR)
+        if os.path.exists(result_image_path):  # delete any previous result file
+            os.remove(result_image_path)
+        result.save(result_image_path)  # file name's extension determines format
+        P2_BALL_IMG_S = pygame.image.load(result_image_path)
+        # HIGHLIGHT
+        HIGHLIGHT_BALL = './img/damaged_ball.png'
+        result_image_path = './img/p1_highlight.png'
+        result = PyColorize.image_tint(HIGHLIGHT_BALL, '#%s' % P1_COLOUR)
+        if os.path.exists(result_image_path):
+            os.remove(result_image_path)
+        result.save(result_image_path)
+        P1_HIGHLIGHT_IMG = pygame.image.load(result_image_path)
+        result_image_path = './img/p2_highlight.png'
+        result = PyColorize.image_tint(HIGHLIGHT_BALL, '#%s' % P2_COLOUR)
+        if os.path.exists(result_image_path):
+            os.remove(result_image_path)
+        result.save(result_image_path)
+        P2_HIGHLIGHT_IMG = pygame.image.load(result_image_path)
+        
+    else:
+        P1_BALL_IMG_L = pygame.image.load('./img/p1_ball_l.png')
+        P1_BALL_IMG_M = pygame.image.load('./img/p1_ball_m.png')
+        P1_BALL_IMG_S = pygame.image.load('./img/p1_ball_s.png')
+        P2_BALL_IMG_L = pygame.image.load('./img/p2_ball_l.png')
+        P2_BALL_IMG_M = pygame.image.load('./img/p2_ball_m.png')
+        P2_BALL_IMG_S = pygame.image.load('./img/p2_ball_s.png')
+        P1_HIGHLIGHT_IMG = pygame.image.load('./img/p1_highlight.png')
+        P2_HIGHLIGHT_IMG = pygame.image.load('./img/p2_highlight.png')
 
-ENDROUND_BALL_IMG_L = pygame.image.load(input_image_l)
-ENDROUND_BALL_IMG_M = pygame.image.load(input_image_m)
-ENDROUND_BALL_IMG_S = pygame.image.load(input_image_s)
+    # For the animation at the end of the round, with balls falling
+    ENDROUND_BALL_IMG_L = pygame.image.load(input_image_l)
+    ENDROUND_BALL_IMG_M = pygame.image.load(input_image_m)
+    ENDROUND_BALL_IMG_S = pygame.image.load(input_image_s)
 
-if NOISE: # Aah, the things we do for grittyness
-    noisescaledPath = './img/noise_scaled.png'
-    NOISE_IMG = pygame.image.load('./img/noise.png')
-    noise_img_scaled = pygame.transform.scale(NOISE_IMG, (WIDTH, HEIGHT))
-    pygame.image.save(noise_img_scaled, noisescaledPath)
-    NOISE_IMG = pygame.image.load(noisescaledPath)
+    if NOISE: # Aah, the things we do for grittyness
+        noisescaledPath = './img/noise_scaled.png'
+        NOISE_IMG = pygame.image.load('./img/noise.png')
+        noise_img_scaled = pygame.transform.scale(NOISE_IMG, (WIDTH, HEIGHT))
+        pygame.image.save(noise_img_scaled, noisescaledPath)
+        NOISE_IMG = pygame.image.load(noisescaledPath)
 
-P1_L_IMG = pygame.transform.scale(P1_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE*2))
-P1_M_IMG = pygame.transform.scale(P1_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
-P1_S_IMG = pygame.transform.scale(P1_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
+    P1_L_IMG = pygame.transform.scale(P1_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE*2))
+    P1_M_IMG = pygame.transform.scale(P1_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
+    P1_S_IMG = pygame.transform.scale(P1_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
 
-P2_L_IMG = pygame.transform.scale(P2_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE*2))
-P2_M_IMG = pygame.transform.scale(P2_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
-P2_S_IMG = pygame.transform.scale(P2_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
+    P2_L_IMG = pygame.transform.scale(P2_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE*2))
+    P2_M_IMG = pygame.transform.scale(P2_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
+    P2_S_IMG = pygame.transform.scale(P2_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
 
-ER_L_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE*2))
-ER_M_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
-ER_S_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
+    ER_L_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_L, (L_BALLSIZE*2, L_BALLSIZE*2))
+    ER_M_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_M, (M_BALLSIZE*2, M_BALLSIZE*2))
+    ER_S_IMG = pygame.transform.scale(ENDROUND_BALL_IMG_S, (S_BALLSIZE*2, S_BALLSIZE*2))
 
-P1_HL_L_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (L_BALLSIZE*2+HL_SIZE*2, L_BALLSIZE*2+HL_SIZE*2))
-P1_HL_M_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (M_BALLSIZE*2+HL_SIZE*2, M_BALLSIZE*2+HL_SIZE*2))
-P1_HL_S_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (S_BALLSIZE*2+HL_SIZE*2, S_BALLSIZE*2+HL_SIZE*2))
+    P1_HL_L_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (L_BALLSIZE*2+HL_SIZE*2, L_BALLSIZE*2+HL_SIZE*2))
+    P1_HL_M_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (M_BALLSIZE*2+HL_SIZE*2, M_BALLSIZE*2+HL_SIZE*2))
+    P1_HL_S_IMG = pygame.transform.scale(P1_HIGHLIGHT_IMG, (S_BALLSIZE*2+HL_SIZE*2, S_BALLSIZE*2+HL_SIZE*2))
 
-P2_HL_L_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (L_BALLSIZE*2+HL_SIZE*2, L_BALLSIZE*2+HL_SIZE*2))
-P2_HL_M_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (M_BALLSIZE*2+HL_SIZE*2, M_BALLSIZE*2+HL_SIZE*2))
-P2_HL_S_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (S_BALLSIZE*2+HL_SIZE*2, S_BALLSIZE*2+HL_SIZE*2))
+    P2_HL_L_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (L_BALLSIZE*2+HL_SIZE*2, L_BALLSIZE*2+HL_SIZE*2))
+    P2_HL_M_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (M_BALLSIZE*2+HL_SIZE*2, M_BALLSIZE*2+HL_SIZE*2))
+    P2_HL_S_IMG = pygame.transform.scale(P2_HIGHLIGHT_IMG, (S_BALLSIZE*2+HL_SIZE*2, S_BALLSIZE*2+HL_SIZE*2))
+
+    print ("Loaded all files successfully.")
+except IOError:
+    print ("There are missing files, exiting...")
+    sys.exit()
 
 ######### C O L O U R S #########
 p1_colour_rgb = struct.unpack('BBB',P1_COLOUR.decode('hex'))
@@ -221,8 +225,13 @@ endroundballs.mass_of_air = 0.03
 endroundballs.acceleration = universe.acceleration
 endroundballs.global_elasticity = universe.global_elasticity
 
+
 # CLUTTER
 def Quit():
+    # Write settings to file
+    settings_file = open(SETTINGS_PATH, 'w')
+    settings_file.write('SOUND = {0}\nVIBRATE = {1}'.format(SOUND, VIBRATE))
+    settings_file.close()
     print ("Exiting cleanly...")
     return False
 def spawnBall(p, s):
@@ -282,12 +291,23 @@ def restartRound():
 
     p1_s, p2_s, b_i_m = [], [], []
 
+    print ("Starting new round!")
+
     return p1, p2, p1_b, p2_b, p1_s, p2_s, b_i_m
 
 # Defining variables for later
 pygame.display.set_caption(WINDOW_TITLE)
 screen = pygame.display.set_mode((WIDTH, HEIGHT))
 
+if os.path.exists(SETTINGS_PATH): # Loads settings from settings file
+    import imp
+    f = open(SETTINGS_PATH)
+    settings = imp.load_source('settings', '', f)
+    SOUND = settings.SOUND
+    VIBRATE = settings.VIBRATE
+    f.close()
+
+PyParticles.SOUND, PyParticles.VIBRATE = SOUND, VIBRATE
 p1_score_list, p2_score_list, p1_balls, p2_balls, balls_in_motion = [], [], [], [], []
 p1_score, p2_score = 0, 0
 BALL_SIZES = ["s", "m", "l"]
@@ -527,7 +547,7 @@ while running:
                     paused = True
                     delay = 0
                     del endroundballs.particles[:]
-                    for p in universe.particles:
+                    for p in universe.particles:# Adds a copy of all remaining balls to another set of particles
                         endroundballs.addParticles(mass=100, player=p.player, hp=BALL_HITPOINTS, size=p.size, speed=0, x=p.x, y=p.y, elasticity=p.elasticity, vibrate=False, sound=False)
                     if p1_score > p2_score:
                         endroundballs.acceleration = (pi, -0.20)
@@ -535,6 +555,12 @@ while running:
                         endroundballs.acceleration = (pi, 0.20)
                     else:
                         endroundballs.acceleration = (pi, 0)
+                    if p1_score > p2_score:
+                        print ("Top wins!")
+                    elif p1_score < p2_score:
+                        print ("Bottom wins!")
+                    else:
+                        print ("It's a tie!")
 
             # Make a list of balls that are in motion
             if p.speed > MOTION_TRESHOLD:
